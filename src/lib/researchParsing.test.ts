@@ -56,4 +56,32 @@ describe("parseResearchFacts", () => {
     expect(parseResearchFacts(JSON.stringify({ notFacts: [] }))).toEqual([]);
     expect(parseResearchFacts(JSON.stringify({ facts: "not an array" }))).toEqual([]);
   });
+
+  it("prefers the last fenced JSON block over an earlier placeholder/example block", () => {
+    const text = `Example format:
+\`\`\`json
+{"facts": [{"section": "companySnapshot", "content": "ILLUSTRATIVE PLACEHOLDER", "sourceDetail": "example.com"}]}
+\`\`\`
+
+Real answer:
+\`\`\`json
+{"facts": [{"section": "techStack", "content": "Go", "sourceDetail": "docs"}]}
+\`\`\``;
+
+    expect(parseResearchFacts(text)).toEqual([{ section: "techStack", content: "Go", sourceDetail: "docs" }]);
+  });
+
+  it("prefers the last fenced JSON block over an earlier empty-facts stub", () => {
+    const text = `Example format:
+\`\`\`json
+{"facts": []}
+\`\`\`
+
+Actual result:
+\`\`\`json
+{"facts": [{"section": "techStack", "content": "Go", "sourceDetail": "docs"}]}
+\`\`\``;
+
+    expect(parseResearchFacts(text)).toEqual([{ section: "techStack", content: "Go", sourceDetail: "docs" }]);
+  });
 });

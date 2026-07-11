@@ -16,26 +16,34 @@ const VALID_SECTIONS = new Set([
   "sources",
 ]);
 
-export function extractJsonBlock(text: string): string | null {
-  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/);
-  if (fenced) return fenced[1].trim();
+export function extractJsonBlocks(text: string): string[] {
+  const fenceRegex = /```(?:json)?\s*([\s\S]*?)```/g;
+  const blocks: string[] = [];
+  let match: RegExpExecArray | null;
+  while ((match = fenceRegex.exec(text)) !== null) {
+    blocks.push(match[1].trim());
+  }
+  if (blocks.length > 0) return blocks;
 
   const firstBrace = text.indexOf("{");
   const lastBrace = text.lastIndexOf("}");
-  if (firstBrace === -1 || lastBrace === -1 || lastBrace < firstBrace) return null;
+  if (firstBrace === -1 || lastBrace === -1 || lastBrace < firstBrace) return [];
 
-  return text.slice(firstBrace, lastBrace + 1);
+  return [text.slice(firstBrace, lastBrace + 1)];
 }
 
-export function parseResearchFacts(resultText: string): ParsedFact[] {
-  const jsonBlock = extractJsonBlock(resultText);
-  if (!jsonBlock) return [];
-
+/**
+ * Attempts to parse a single candidate JSON block and validate its shape.
+ * Returns `null` if the candidate isn't valid JSON or isn't shaped like a
+ * research-facts payload. Returns an array (possibly empty) of validated
+ * facts if the candidate was validly shaped.
+ */
+function tryParseCandidate(jsonBlock: string): ParsedFact[] | null {
   let parsed: unknown;
   try {
     parsed = JSON.parse(jsonBlock);
   } catch {
-    return [];
+    return null;
   }
 
   if (
@@ -44,7 +52,7 @@ export function parseResearchFacts(resultText: string): ParsedFact[] {
     !("facts" in parsed) ||
     !Array.isArray((parsed as { facts: unknown }).facts)
   ) {
-    return [];
+    return null;
   }
 
   const facts: ParsedFact[] = [];
@@ -69,4 +77,19 @@ export function parseResearchFacts(resultText: string): ParsedFact[] {
   }
 
   return facts;
+}
+
+export function parseResearchFacts(resultText: string): ParsedFact[] {
+  const candidates = extractJsonBlocks(resultText);
+
+  let emptyValidResult: ParsedFact[] | null = null;
+
+  for (let i = candidates.length - 1; i >= 0; i--) {
+    const result = tryParseCandidate(candidates[i]);
+    if (result === null) continue;
+    if (result.length > 0) return result;
+    if (emptyValidResult === null) emptyValidResult = result;
+  }
+
+  return emptyValidResult ?? [];
 }
