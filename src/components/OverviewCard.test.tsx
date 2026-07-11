@@ -10,15 +10,15 @@ describe("OverviewCard", () => {
   it("renders each section's facts", () => {
     render(
       <OverviewCard
-        companyDomain="omp.com"
+        companyDomain="example.com"
         sections={{
-          companySnapshot: [researched("Founded 1985.")],
+          companySnapshot: [researched("Founded 2010.")],
           techStack: [researched("Go"), userProvided("Python — migrating off")],
         }}
       />
     );
 
-    expect(screen.getByText("Founded 1985.")).toBeInTheDocument();
+    expect(screen.getByText("Founded 2010.")).toBeInTheDocument();
     expect(screen.getByText("Go")).toBeInTheDocument();
     expect(screen.getByText("Python — migrating off")).toBeInTheDocument();
   });
