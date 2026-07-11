@@ -1,5 +1,3 @@
-.section { padding: 0.9rem 0; }
-.section + .section { border-top: 1px solid var(--border); }
 .label {
   font-family: var(--font-mono);
   font-size: 0.68rem;
@@ -8,6 +6,70 @@
   color: var(--ink-faint);
   margin-bottom: 0.6rem;
 }
+.empty { font-size: 0.83rem; color: var(--ink-faint); font-style: italic; }
+
+.tagline { font-size: 0.9rem; color: var(--ink-muted); margin-bottom: 1rem; }
+
+/* stat strip */
+.statStrip {
+  display: flex;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  margin-bottom: 1.1rem;
+  overflow: hidden;
+}
+.stat { flex: 1; padding: 0.65rem 0.4rem; text-align: center; border-right: 1px solid var(--border); }
+.stat:last-child { border-right: none; }
+.statIcon { color: var(--ink-faint); margin-bottom: 0.25rem; display: flex; justify-content: center; }
+.statValue { display: block; font-family: var(--font-mono); font-weight: 700; font-size: 0.9rem; }
+.statLabel { display: block; font-size: 0.63rem; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 0.15rem; }
+
+/* 2-column grid of secondary blocks */
+.ovGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; margin-bottom: 0.85rem; }
+@media (max-width: 640px) { .ovGrid { grid-template-columns: 1fr; } }
+.ovBlock { background: var(--surface-2); border-radius: 8px; padding: 0.85rem 0.95rem; }
+
+/* category rating rows */
+.catRatings { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 0.6rem; }
+.catRow { display: flex; align-items: center; gap: 0.5rem; }
+.catBadge {
+  font-family: var(--font-mono); font-weight: 700; font-size: 0.7rem;
+  background: var(--accent-soft); color: var(--accent-ink);
+  border-radius: 4px; padding: 0.12rem 0.38rem; flex: none;
+}
+.catName { font-size: 0.8rem; color: var(--ink-muted); }
+
+.prosCons { display: flex; flex-direction: column; gap: 0.5rem; }
+.miniLabel {
+  display: block; font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--ink-faint); margin-bottom: 0.3rem;
+}
+
+/* key/value fact rows (Company @ Location, Role Specifics) */
+.kvList { display: flex; flex-direction: column; gap: 0.4rem; }
+.kvRow { display: flex; justify-content: space-between; gap: 0.6rem; font-size: 0.8rem; }
+.kvLabel { color: var(--ink-faint); }
+.kvValue { color: var(--ink-muted); text-align: right; }
+.kvRow[data-source="USER_PROVIDED"] .kvValue { color: var(--accent-ink); font-weight: 600; }
+
+/* timeline (Funding & News) */
+.timeline { display: flex; flex-direction: column; gap: 0.45rem; }
+.timelineRow { display: flex; gap: 0.6rem; align-items: baseline; }
+.tDate { flex: none; width: 3.6rem; font-family: var(--font-mono); font-size: 0.72rem; color: var(--ink-faint); }
+.timelineRow[data-source="USER_PROVIDED"] .tDate { color: var(--accent); }
+.tEvent { font-size: 0.82rem; color: var(--ink-muted); }
+
+/* legend */
+.legend { display: flex; gap: 1rem; margin-bottom: 0.65rem; }
+.legendItem { display: flex; align-items: center; gap: 0.35rem; font-size: 0.68rem; color: var(--ink-faint); }
+.legendDot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+.legendDotResearch { border: 1.5px solid var(--ink-faint); background: transparent; }
+.legendDotNotes { background: var(--accent); }
+
+.sectionFull { padding: 0.9rem 0; }
+.sectionFull + .sectionFull { border-top: 1px solid var(--border); }
+.ovGrid + .sectionFull { border-top: 1px solid var(--border); }
+
 .factList { display: flex; flex-direction: column; gap: 0.4rem; }
 .factRow {
   font-size: 0.85rem;
@@ -16,6 +78,10 @@
   border-left: 3px solid var(--ink-faint);
 }
 .factRow[data-source="USER_PROVIDED"] { border-left-color: var(--accent); }
+.factRowMono { font-family: var(--font-mono); font-size: 0.8rem; }
+.compLabel { color: var(--ink-faint); }
+.compValuePrimary { color: var(--accent-ink); font-weight: 700; }
+
 .chipRow { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .chip {
   font-family: var(--font-mono);
@@ -26,3 +92,9 @@
   border: 1px solid var(--border);
 }
 .chip[data-source="USER_PROVIDED"] { background: var(--accent-soft); border-color: transparent; }
+
+/* source list */
+.sourceList { display: flex; flex-direction: column; gap: 0.4rem; }
+.sourceItem { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; color: var(--ink-muted); }
+.sourceItem svg { flex: none; opacity: 0.55; }
+.domain { font-family: var(--font-mono); font-size: 0.73rem; color: var(--ink-faint); }
