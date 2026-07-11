@@ -10,8 +10,21 @@
 }
 .canvas {
   padding: 1.75rem 2rem;
-  max-width: 900px;
+  max-width: min(900px, 100%);
   display: flex;
   flex-direction: column;
   gap: 0.9rem;
+}
+
+@media (max-width: 880px) {
+  .app {
+    grid-template-columns: 1fr;
+  }
+  .rail {
+    border-right: none;
+    border-bottom: 1px solid var(--rail-border);
+  }
+  .canvas {
+    padding: 1.25rem 1rem;
+  }
 }

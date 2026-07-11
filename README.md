@@ -1,4 +1,4 @@
-# Interview Research Tool
+# Dossier
 
 A personal webapp for researching a company ahead of an interview and tracking what you learn round by round.
 

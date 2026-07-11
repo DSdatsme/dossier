@@ -6,9 +6,8 @@ import type { ThreadSummary } from "@/lib/types";
 import styles from "./ThreadRail.module.css";
 
 function progressLabel(thread: ThreadSummary): string {
-  if (thread.hasNotHappeningRound) return "skipped";
-  if (thread.totalRounds != null) return `${thread.completedRounds}/${thread.totalRounds}`;
-  return `${thread.completedRounds}/—`;
+  const fraction = thread.totalRounds != null ? `${thread.completedRounds}/${thread.totalRounds}` : `${thread.completedRounds}/—`;
+  return thread.hasNotHappeningRound ? `${fraction} · skipped` : fraction;
 }
 
 export function ThreadRail({ threads }: { threads: ThreadSummary[] }) {
@@ -17,8 +16,16 @@ export function ThreadRail({ threads }: { threads: ThreadSummary[] }) {
   return (
     <div className={styles.railInner}>
       <div className={styles.brand}>
-        <span className={styles.mark} aria-hidden="true" />
-        <span className={styles.word}>Research</span>
+        <svg className={styles.mark} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <defs>
+            <linearGradient id="dossierMark" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stopColor="#93a3d6" />
+              <stop offset="1" stopColor="#3b4a73" />
+            </linearGradient>
+          </defs>
+          <path d="M3 6h6v2h12v11H3V6z" fill="url(#dossierMark)" />
+        </svg>
+        <span className={styles.word}>Dossier</span>
       </div>
       <Link href="/new" className={styles.newThread}>
         + New thread

@@ -28,7 +28,13 @@ export function ChatBar({ messages }: { messages: ChatMessage[] }) {
         </div>
       </div>
       <div className={styles.inputRow}>
-        <input type="text" placeholder="Ask or add something..." aria-label="Message" disabled />
+        <input
+          type="text"
+          placeholder="Chat isn't connected yet"
+          aria-label="Message"
+          disabled
+        />
+        <span className={styles.soon}>Coming soon</span>
         <button
           type="button"
           className={styles.toggle}

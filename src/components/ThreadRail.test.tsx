@@ -17,7 +17,7 @@ describe("ThreadRail", () => {
     render(<ThreadRail threads={threads} />);
     expect(screen.getByText("Nimbus Robotics")).toBeInTheDocument();
     expect(screen.getByText("Foo Inc")).toBeInTheDocument();
-    expect(screen.getByText("skipped")).toBeInTheDocument();
+    expect(screen.getByText("2/4 · skipped")).toBeInTheDocument();
     expect(screen.getByText("0/—")).toBeInTheDocument();
   });
 

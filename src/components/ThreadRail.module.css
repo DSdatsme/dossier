@@ -5,16 +5,15 @@
 }
 .brand {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 0.5rem;
   padding: 1.25rem 1.1rem 1rem;
   border-bottom: 1px solid var(--rail-border);
 }
 .mark {
-  width: 9px;
-  height: 9px;
-  border-radius: 2px;
-  background: linear-gradient(135deg, #93a3d6, #3b4a73);
+  width: 18px;
+  height: 18px;
+  flex: none;
 }
 .word {
   font-family: var(--font-mono);
@@ -70,3 +69,34 @@
   color: var(--rail-ink-muted);
 }
 .progress { flex: none; }
+
+@media (max-width: 880px) {
+  .railInner {
+    flex-direction: row;
+    align-items: center;
+    overflow-x: auto;
+  }
+  .brand {
+    flex: none;
+    border-bottom: none;
+    border-right: 1px solid var(--rail-border);
+  }
+  .newThread {
+    flex: none;
+    margin: 0.5rem;
+    white-space: nowrap;
+  }
+  .list {
+    flex-direction: row;
+    overflow-x: auto;
+  }
+  .thread {
+    flex: none;
+    min-width: 170px;
+  }
+  .threadMeta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.1rem;
+  }
+}

@@ -51,7 +51,18 @@
   box-shadow: var(--shadow-panel);
 }
 .inputRow input { flex: 1; border: none; background: transparent; color: var(--ink); outline: none; font-size: 0.9rem; }
-.inputRow input:disabled { color: var(--ink-faint); }
+.inputRow input:disabled { color: var(--ink-faint); cursor: not-allowed; }
+.soon {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  padding: 0.2rem 0.55rem;
+}
 .toggle {
   flex: none;
   width: 30px;

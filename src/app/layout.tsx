@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Interview Research Tool",
+  title: "Dossier",
   description: "Personal interview research and prep tracker",
 };
 

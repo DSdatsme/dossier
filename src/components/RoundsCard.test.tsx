@@ -23,7 +23,7 @@ describe("RoundsCard highlight", () => {
       makeRound({ id: "b", name: "System Design", status: "NOT_HAPPENING" }),
     ];
     render(<RoundsCard rounds={rounds} confirmedTotalRounds={4} confirmedTotalRoundsSource="glassdoor" />);
-    expect(screen.getByText("System Design skipped · 1 of 2 completed")).toBeInTheDocument();
+    expect(screen.getByText("1 of 2 completed · System Design skipped")).toBeInTheDocument();
   });
 
   it("shows completed-of-total when a total is confirmed and nothing is skipped", () => {
@@ -45,5 +45,10 @@ describe("RoundsCard highlight", () => {
     expect(screen.getByText("Technical")).toBeInTheDocument();
     expect(screen.getAllByText("Nothing specific found yet.")).toHaveLength(6);
     expect(screen.getAllByText("Nothing yet.")).toHaveLength(2);
+  });
+
+  it("shows an empty-state message rather than a bare well when there are no rounds", () => {
+    render(<RoundsCard rounds={[]} confirmedTotalRounds={null} confirmedTotalRoundsSource={null} />);
+    expect(screen.getByText("No rounds confirmed yet.")).toBeInTheDocument();
   });
 });

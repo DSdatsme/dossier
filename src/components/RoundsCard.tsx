@@ -11,7 +11,7 @@ function highlightFor(
   const skipped = rounds.find((r) => r.status === "NOT_HAPPENING");
 
   if (skipped) {
-    return `${skipped.name} skipped · ${completed} of ${rounds.length} completed`;
+    return `${completed} of ${rounds.length} completed · ${skipped.name} skipped`;
   }
   if (confirmedTotalRounds != null) {
     return `${completed} of ${confirmedTotalRounds} completed`;
@@ -38,11 +38,15 @@ export function RoundsCard({
   return (
     <Accordion title={title} highlight={highlight} defaultOpen>
       <div className={styles.well}>
-        <div className={styles.list}>
-          {rounds.map((round) => (
-            <RoundCard key={round.id} round={round} />
-          ))}
-        </div>
+        {rounds.length === 0 ? (
+          <p className={styles.empty}>No rounds confirmed yet.</p>
+        ) : (
+          <div className={styles.list}>
+            {rounds.map((round) => (
+              <RoundCard key={round.id} round={round} />
+            ))}
+          </div>
+        )}
       </div>
     </Accordion>
   );
