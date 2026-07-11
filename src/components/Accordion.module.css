@@ -1,0 +1,78 @@
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-card);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 1.05rem 1.25rem;
+}
+
+.toggle {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem 1rem;
+  text-align: left;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 600;
+  flex: none;
+}
+
+.highlight {
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  font-weight: 400;
+  color: var(--ink-faint);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chevron {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-faint);
+  transition: transform 0.16s ease;
+}
+
+/* Direct-child combinators only: a descendant selector here would also match
+   a nested Accordion's chevron/body whenever this outer one is open. */
+.card[data-open="true"] > .head > .chevron {
+  transform: rotate(180deg);
+}
+
+.bodyWrap {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.2s ease;
+}
+
+.card[data-open="true"] > .bodyWrap {
+  grid-template-rows: 1fr;
+}
+
+.bodyInner {
+  overflow: hidden;
+}
+
+.body {
+  padding: 0.3rem 1.25rem 1.4rem;
+  border-top: 1px solid var(--border);
+  margin-top: 0.1rem;
+  padding-top: 1.2rem;
+}

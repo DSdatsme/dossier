@@ -1,0 +1,8 @@
+reports/
+.superpowers/
+docs/
+node_modules/
+.next/
+.env
+/prisma/dev.db
+*.tsbuildinfo

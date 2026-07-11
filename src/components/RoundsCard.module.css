@@ -1,0 +1,2 @@
+.well { background: var(--surface-2); border-radius: 8px; padding: 0.75rem; }
+.list { display: flex; flex-direction: column; gap: 0.7rem; }

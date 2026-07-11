@@ -1,0 +1,94 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Thread {
+  id                          String    @id @default(cuid())
+  companyName                 String
+  companyDomain                String?
+  position                     String
+  location                     String
+  confirmedTotalRounds         Int?
+  confirmedTotalRoundsSource   String?
+  createdAt                    DateTime  @default(now())
+  updatedAt                    DateTime  @updatedAt
+
+  rounds              Round[]
+  facts               Fact[]
+  interviewerProfiles InterviewerProfile[]
+}
+
+model Round {
+  id              String      @id @default(cuid())
+  threadId        String
+  thread          Thread      @relation(fields: [threadId], references: [id])
+  name            String
+  order           Int
+  status          RoundStatus @default(UPCOMING)
+  confirmedSource String
+  createdAt       DateTime    @default(now())
+
+  facts            Fact[]
+  interviewerLinks RoundInterviewer[]
+}
+
+enum RoundStatus {
+  UPCOMING
+  COMPLETED
+  NOT_HAPPENING
+}
+
+model InterviewerProfile {
+  id           String   @id @default(cuid())
+  threadId     String
+  thread       Thread   @relation(fields: [threadId], references: [id])
+  name         String
+  role         String?
+  tenure       String?
+  background   String?
+  sourceDetail String?
+  createdAt    DateTime @default(now())
+
+  roundLinks RoundInterviewer[]
+}
+
+model RoundInterviewer {
+  id        String             @id @default(cuid())
+  roundId   String
+  round     Round              @relation(fields: [roundId], references: [id])
+  profileId String
+  profile   InterviewerProfile @relation(fields: [profileId], references: [id])
+
+  @@unique([roundId, profileId])
+}
+
+model Fact {
+  id           String         @id @default(cuid())
+  threadId     String
+  thread       Thread         @relation(fields: [threadId], references: [id])
+  roundId      String?
+  round        Round?         @relation(fields: [roundId], references: [id])
+  section      String
+  content      String
+  sourceType   FactSourceType
+  sourceDetail String
+  state        FactState      @default(ACTIVE)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+}
+
+enum FactSourceType {
+  RESEARCHED
+  USER_PROVIDED
+}
+
+enum FactState {
+  ACTIVE
+  EDITED
+  REMOVED
+}

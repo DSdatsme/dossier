@@ -1,0 +1,78 @@
+:root {
+  --bg: #eceef4;
+  --surface: #fbfbfd;
+  --surface-2: #f2f3f8;
+  --ink: #1a1b24;
+  --ink-muted: #5c5e72;
+  --ink-faint: #8b8da3;
+  --border: #d9dbe6;
+  --accent: #3b4a73;
+  --accent-ink: #29365a;
+  --accent-soft: #e4e8f4;
+  --status-upcoming: #8a6412;
+  --status-upcoming-soft: #f5edd7;
+  --status-completed: #2b7a52;
+  --status-completed-soft: #e0f0e6;
+  --status-stopped: #a13d28;
+  --status-stopped-soft: #f5e2db;
+  --rail-bg: #14151d;
+  --rail-ink: #e7e8f0;
+  --rail-ink-muted: #8b8da8;
+  --rail-border: #262838;
+  --rail-active: #23253a;
+
+  --font-display: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", "PT Serif", Georgia, serif;
+  --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "SF Mono", "Cascadia Code", "JetBrains Mono", Consolas, "Liberation Mono", Menlo, monospace;
+
+  --shadow-panel: 0 -6px 24px rgba(20, 21, 33, 0.14), 0 0 0 1px rgba(20, 21, 33, 0.05);
+  --shadow-card: 0 1px 2px rgba(20, 21, 33, 0.04);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #101119;
+    --surface: #191b26;
+    --surface-2: #1f2130;
+    --ink: #e8e9f0;
+    --ink-muted: #9698ac;
+    --ink-faint: #6c6e84;
+    --border: #2c2e3f;
+    --accent: #93a3d6;
+    --accent-ink: #c3cbec;
+    --accent-soft: #262a42;
+    --status-upcoming: #d0a94a;
+    --status-upcoming-soft: #332a15;
+    --status-completed: #63c491;
+    --status-completed-soft: #16301f;
+    --status-stopped: #e08064;
+    --status-stopped-soft: #35201a;
+    --rail-bg: #0b0c12;
+    --rail-ink: #e7e8f0;
+    --rail-ink-muted: #82849c;
+    --rail-border: #1d1e2a;
+    --rail-active: #1a1c2c;
+    --shadow-panel: 0 -6px 28px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.04);
+  }
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  font-family: var(--font-ui);
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--ink);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 600; margin: 0; }
+p { margin: 0; }
+ul { margin: 0; padding: 0; list-style: none; }
+button { font: inherit; color: inherit; background: none; border: none; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+.tabular { font-variant-numeric: tabular-nums; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}

@@ -1,0 +1,57 @@
+.railInner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.brand {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 1.25rem 1.1rem 1rem;
+  border-bottom: 1px solid var(--rail-border);
+}
+.mark {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  background: linear-gradient(135deg, #93a3d6, #3b4a73);
+}
+.word {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  color: var(--rail-ink-muted);
+  text-transform: uppercase;
+}
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.6rem;
+}
+.thread {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: 7px;
+  border-left: 2px solid transparent;
+  color: var(--rail-ink-muted);
+  text-decoration: none;
+}
+.thread:hover { background: var(--rail-active); color: var(--rail-ink); }
+.threadActive {
+  background: var(--rail-active);
+  border-left-color: #93a3d6;
+  color: var(--rail-ink);
+}
+.threadName { font-family: var(--font-display); font-size: 0.98rem; font-weight: 600; }
+.threadMeta {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--rail-ink-muted);
+}
+.progress { flex: none; }

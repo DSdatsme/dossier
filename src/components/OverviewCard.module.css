@@ -1,0 +1,28 @@
+.section { padding: 0.9rem 0; }
+.section + .section { border-top: 1px solid var(--border); }
+.label {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: 0.6rem;
+}
+.factList { display: flex; flex-direction: column; gap: 0.4rem; }
+.factRow {
+  font-size: 0.85rem;
+  color: var(--ink-muted);
+  padding-left: 0.65rem;
+  border-left: 3px solid var(--ink-faint);
+}
+.factRow[data-source="USER_PROVIDED"] { border-left-color: var(--accent); }
+.chipRow { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.chip {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.35rem 0.6rem;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+.chip[data-source="USER_PROVIDED"] { background: var(--accent-soft); border-color: transparent; }
