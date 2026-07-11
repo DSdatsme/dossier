@@ -82,6 +82,8 @@ export async function getThreadReport(threadId: string): Promise<ThreadReport | 
     companyDomain: thread.companyDomain,
     confirmedTotalRounds: thread.confirmedTotalRounds,
     confirmedTotalRoundsSource: thread.confirmedTotalRoundsSource,
+    researchStatus: thread.researchStatus,
+    researchError: thread.researchError,
     sections,
     rounds,
   };

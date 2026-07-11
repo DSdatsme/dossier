@@ -1,5 +1,6 @@
 export type FactSourceType = "RESEARCHED" | "USER_PROVIDED";
 export type RoundStatusView = "UPCOMING" | "COMPLETED" | "NOT_HAPPENING";
+export type ResearchStatusView = "NOT_STARTED" | "RESEARCHING" | "DONE" | "FAILED";
 
 export interface FactView {
   id: string;
@@ -45,6 +46,8 @@ export interface ThreadReport {
   companyDomain: string | null;
   confirmedTotalRounds: number | null;
   confirmedTotalRoundsSource: string | null;
+  researchStatus: ResearchStatusView;
+  researchError: string | null;
   sections: Record<string, FactView[]>;
   rounds: RoundView[];
 }

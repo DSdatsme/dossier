@@ -48,4 +48,13 @@ describe("getThreadReport", () => {
     expect(report!.rounds[2].status).toBe("NOT_HAPPENING");
     expect(report!.rounds[2].yourNotes[0].content).toContain("skipping System Design");
   });
+
+  it("exposes research status, defaulting to DONE for threads not created through the research trigger", async () => {
+    const summaries = await getThreadSummaries();
+    const nimbus = summaries.find((t) => t.companyName === "Nimbus Robotics")!;
+    const report = await getThreadReport(nimbus.id);
+
+    expect(report!.researchStatus).toBe("DONE");
+    expect(report!.researchError).toBeNull();
+  });
 });
