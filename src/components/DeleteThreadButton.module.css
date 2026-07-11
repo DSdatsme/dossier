@@ -1,0 +1,51 @@
+.button {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.03em;
+  padding: 0.4rem 0.75rem;
+  border-radius: 7px;
+  border: 1px solid var(--status-stopped-soft);
+  color: var(--status-stopped);
+  background: transparent;
+  flex: none;
+}
+.button:hover {
+  background: var(--status-stopped-soft);
+}
+
+.confirmRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: none;
+}
+.confirmLabel {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--ink-faint);
+}
+.cancel {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  padding: 0.4rem 0.65rem;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  color: var(--ink-muted);
+  background: transparent;
+}
+.cancel:hover {
+  background: var(--surface-2);
+}
+.confirmDelete {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  padding: 0.4rem 0.65rem;
+  border-radius: 7px;
+  border: 1px solid var(--status-stopped);
+  color: var(--surface);
+  background: var(--status-stopped);
+}
+.confirmDelete:hover {
+  background: var(--status-stopped);
+  opacity: 0.85;
+}

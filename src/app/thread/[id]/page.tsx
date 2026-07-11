@@ -5,6 +5,7 @@ import { ThreadRail } from "@/components/ThreadRail";
 import { OverviewCard } from "@/components/OverviewCard";
 import { RoundsCard } from "@/components/RoundsCard";
 import { ChatBar } from "@/components/ChatBar";
+import { DeleteThreadButton } from "@/components/DeleteThreadButton";
 import styles from "./page.module.css";
 
 export default async function ThreadPage({ params }: { params: Promise<{ id: string }> }) {
@@ -15,12 +16,15 @@ export default async function ThreadPage({ params }: { params: Promise<{ id: str
 
   return (
     <AppShell rail={<ThreadRail threads={threads} />}>
-      <header className={styles.header}>
-        <h1>
-          {report.companyName} · {report.position}
-        </h1>
-        <span className={styles.sub}>{report.location}</span>
-      </header>
+      <div className={styles.headerRow}>
+        <header className={styles.header}>
+          <h1>
+            {report.companyName} · {report.position}
+          </h1>
+          <span className={styles.sub}>{report.location}</span>
+        </header>
+        <DeleteThreadButton threadId={report.id} />
+      </div>
       <OverviewCard sections={report.sections} companyDomain={report.companyDomain} />
       <RoundsCard
         rounds={report.rounds}

@@ -20,6 +20,9 @@ export function ThreadRail({ threads }: { threads: ThreadSummary[] }) {
         <span className={styles.mark} aria-hidden="true" />
         <span className={styles.word}>Research</span>
       </div>
+      <Link href="/new" className={styles.newThread}>
+        + New thread
+      </Link>
       <nav className={styles.list} aria-label="Threads">
         {threads.map((thread) => {
           const href = `/thread/${thread.id}`;

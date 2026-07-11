@@ -23,6 +23,21 @@
   color: var(--rail-ink-muted);
   text-transform: uppercase;
 }
+.newThread {
+  margin: 0.6rem 0.6rem 0;
+  padding: 0.5rem 0.7rem;
+  border-radius: 7px;
+  border: 1px dashed var(--rail-border);
+  color: var(--rail-ink-muted);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  text-align: center;
+  text-decoration: none;
+}
+.newThread:hover {
+  background: var(--rail-active);
+  color: var(--rail-ink);
+}
 .list {
   display: flex;
   flex-direction: column;
