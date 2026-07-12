@@ -1,0 +1,14 @@
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      # Absolute path so it's never resolved relative to the source tree —
+      # only /app/data is persisted, not prisma/schema.prisma or seed.ts.
+      DATABASE_URL: "file:/app/data/dev.db"
+    volumes:
+      - dossier-data:/app/data
+
+volumes:
+  dossier-data:
