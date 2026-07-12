@@ -14,6 +14,7 @@
   width: 18px;
   height: 18px;
   flex: none;
+  overflow: visible;
 }
 .word {
   font-family: var(--font-mono);
