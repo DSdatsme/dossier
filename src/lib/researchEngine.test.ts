@@ -95,4 +95,25 @@ describe("ClaudeCodeCliResearchEngine", () => {
 
     await deleteThread(threadId);
   });
+
+  it("never throws — even if the thread is deleted out from under it mid-research", async () => {
+    const threadId = await createThread({ companyName: "Vanishing Co", position: "Engineer", location: "Remote" });
+    const resultText = JSON.stringify({
+      facts: [{ section: "companySnapshot", content: "Founded: 2020", sourceDetail: "example.com" }],
+    });
+    const engine = new ClaudeCodeCliResearchEngine(async () => {
+      await deleteThread(threadId);
+      return fakeEnvelope(resultText);
+    });
+
+    await expect(
+      engine.research({
+        threadId,
+        companyName: "Vanishing Co",
+        companyDomain: null,
+        position: "Engineer",
+        location: "Remote",
+      })
+    ).resolves.toBeUndefined();
+  });
 });

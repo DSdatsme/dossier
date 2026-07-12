@@ -18,48 +18,56 @@ export class ClaudeCodeCliResearchEngine implements ResearchEngine {
   constructor(private runner: CliRunner = spawnClaudeCli) {}
 
   async research(input: ResearchInput): Promise<void> {
-    const prompt = buildResearchPrompt(input);
-
-    let stdout: string;
     try {
-      stdout = await this.runner(prompt);
-    } catch (error) {
-      await markFailed(input.threadId, describeError(error));
-      return;
-    }
+      const prompt = buildResearchPrompt(input);
 
-    let resultText: string;
-    try {
-      const envelope = JSON.parse(stdout) as { result?: unknown };
-      if (typeof envelope.result !== "string") {
-        await markFailed(input.threadId, "Research run returned no result text.");
+      let stdout: string;
+      try {
+        stdout = await this.runner(prompt);
+      } catch (error) {
+        await markFailed(input.threadId, describeError(error));
         return;
       }
-      resultText = envelope.result;
-    } catch {
-      await markFailed(input.threadId, "Research run's output was not valid JSON.");
-      return;
-    }
 
-    const facts = parseResearchFacts(resultText);
-    if (facts.length === 0) {
-      await markFailed(input.threadId, "No facts could be extracted from the research run.");
-      return;
-    }
+      let resultText: string;
+      try {
+        const envelope = JSON.parse(stdout) as { result?: unknown };
+        if (typeof envelope.result !== "string") {
+          await markFailed(input.threadId, "Research run returned no result text.");
+          return;
+        }
+        resultText = envelope.result;
+      } catch {
+        await markFailed(input.threadId, "Research run's output was not valid JSON.");
+        return;
+      }
 
-    await prisma.fact.createMany({
-      data: facts.map((fact) => ({
-        threadId: input.threadId,
-        section: fact.section,
-        content: fact.content,
-        sourceType: "RESEARCHED" as const,
-        sourceDetail: fact.sourceDetail,
-      })),
-    });
-    await prisma.thread.update({
-      where: { id: input.threadId },
-      data: { researchStatus: "DONE", researchError: null },
-    });
+      const facts = parseResearchFacts(resultText);
+      if (facts.length === 0) {
+        await markFailed(input.threadId, "No facts could be extracted from the research run.");
+        return;
+      }
+
+      await prisma.fact.createMany({
+        data: facts.map((fact) => ({
+          threadId: input.threadId,
+          section: fact.section,
+          content: fact.content,
+          sourceType: "RESEARCHED" as const,
+          sourceDetail: fact.sourceDetail,
+        })),
+      });
+      await prisma.thread.update({
+        where: { id: input.threadId },
+        data: { researchStatus: "DONE", researchError: null },
+      });
+    } catch (error) {
+      await markFailed(input.threadId, describeError(error)).catch(() => {
+        // Thread may no longer exist (e.g. deleted mid-research) or the DB may be
+        // unreachable — there is nothing further to do, but research() must never
+        // reject: it runs detached from the Server Action that triggered it.
+      });
+    }
   }
 }
 
