@@ -6,6 +6,8 @@ import { OverviewCard } from "@/components/OverviewCard";
 import { RoundsCard } from "@/components/RoundsCard";
 import { ChatBar } from "@/components/ChatBar";
 import { DeleteThreadButton } from "@/components/DeleteThreadButton";
+import { ResearchStatusBanner } from "@/components/ResearchStatusBanner";
+import { ResearchStatusPoller } from "@/components/ResearchStatusPoller";
 import styles from "./page.module.css";
 
 export default async function ThreadPage({ params }: { params: Promise<{ id: string }> }) {
@@ -25,6 +27,13 @@ export default async function ThreadPage({ params }: { params: Promise<{ id: str
         </header>
         <DeleteThreadButton threadId={report.id} />
       </div>
+      <ResearchStatusBanner
+        threadId={report.id}
+        companyName={report.companyName}
+        researchStatus={report.researchStatus}
+        researchError={report.researchError}
+      />
+      <ResearchStatusPoller active={report.researchStatus === "RESEARCHING"} />
       <OverviewCard sections={report.sections} companyDomain={report.companyDomain} />
       <RoundsCard
         rounds={report.rounds}
