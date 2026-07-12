@@ -1,0 +1,30 @@
+.banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.7rem 1rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+}
+.banner[data-status="researching"] {
+  background: var(--status-upcoming-soft);
+  color: var(--status-upcoming);
+}
+.banner[data-status="failed"] {
+  background: var(--status-stopped-soft);
+  color: var(--status-stopped);
+}
+.retry {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 7px;
+  border: 1px solid var(--status-stopped);
+  color: var(--status-stopped);
+  background: transparent;
+  flex: none;
+}
+.retry:hover {
+  background: var(--status-stopped-soft);
+}
