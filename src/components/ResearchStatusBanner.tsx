@@ -17,7 +17,7 @@ export function ResearchStatusBanner({
 }) {
   if (researchStatus === "RESEARCHING") {
     return (
-      <div className={styles.banner} data-status="researching">
+      <div className={styles.banner} data-status="researching" role="status" aria-live="polite">
         Researching {companyName}... this can take a minute.
       </div>
     );
@@ -25,7 +25,7 @@ export function ResearchStatusBanner({
 
   if (researchStatus === "FAILED") {
     return (
-      <div className={styles.banner} data-status="failed">
+      <div className={styles.banner} data-status="failed" role="alert" aria-live="assertive">
         <span>Research failed{researchError ? `: ${researchError}` : "."}</span>
         <form action={retryResearchAction}>
           <input type="hidden" name="threadId" value={threadId} />
