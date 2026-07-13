@@ -41,7 +41,7 @@ describe("createThread", () => {
 });
 
 describe("deleteThread", () => {
-  it("removes the thread and all its facts, rounds, interviewer links, and profiles", async () => {
+  it("removes the thread and all its facts, rounds, interviewer links, profiles, and messages", async () => {
     const id = await createThread({
       companyName: "Delete Me Co",
       position: "Engineer",
@@ -58,6 +58,9 @@ describe("deleteThread", () => {
     await prisma.fact.create({
       data: { threadId: id, section: "companySnapshot", content: "test fact", sourceType: "RESEARCHED", sourceDetail: "test" },
     });
+    await prisma.message.create({
+      data: { threadId: id, role: "USER", text: "test message", status: "DONE" },
+    });
 
     await deleteThread(id);
 
@@ -67,9 +70,11 @@ describe("deleteThread", () => {
     const remainingFacts = await prisma.fact.findMany({ where: { threadId: id } });
     const remainingRounds = await prisma.round.findMany({ where: { threadId: id } });
     const remainingProfiles = await prisma.interviewerProfile.findMany({ where: { threadId: id } });
+    const remainingMessages = await prisma.message.findMany({ where: { threadId: id } });
     expect(remainingFacts).toHaveLength(0);
     expect(remainingRounds).toHaveLength(0);
     expect(remainingProfiles).toHaveLength(0);
+    expect(remainingMessages).toHaveLength(0);
   });
 
   it("does not affect other threads", async () => {

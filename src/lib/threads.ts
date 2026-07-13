@@ -20,6 +20,7 @@ export async function createThread(input: CreateThreadInput): Promise<string> {
 }
 
 export async function deleteThread(threadId: string): Promise<void> {
+  await prisma.message.deleteMany({ where: { threadId } });
   await prisma.fact.deleteMany({ where: { threadId } });
   await prisma.roundInterviewer.deleteMany({ where: { round: { threadId } } });
   await prisma.interviewerProfile.deleteMany({ where: { threadId } });

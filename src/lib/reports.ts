@@ -31,11 +31,11 @@ export async function getThreadReport(threadId: string): Promise<ThreadReport | 
   const thread = await prisma.thread.findUnique({
     where: { id: threadId },
     include: {
-      facts: { where: { roundId: null, state: { not: "REMOVED" } } },
+      facts: { where: { roundId: null, state: "ACTIVE" } },
       rounds: {
         orderBy: { order: "asc" },
         include: {
-          facts: { where: { state: { not: "REMOVED" } } },
+          facts: { where: { state: "ACTIVE" } },
           interviewerLinks: { include: { profile: true } },
         },
       },

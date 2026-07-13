@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { getThreadReport, getThreadSummaries } from "@/lib/reports";
+import { getThreadMessages } from "@/lib/messages";
 import { AppShell } from "@/components/AppShell";
 import { ThreadRail } from "@/components/ThreadRail";
 import { OverviewCard } from "@/components/OverviewCard";
@@ -12,9 +13,15 @@ import styles from "./page.module.css";
 
 export default async function ThreadPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [report, threads] = await Promise.all([getThreadReport(id), getThreadSummaries()]);
+  const [report, threads, messages] = await Promise.all([
+    getThreadReport(id),
+    getThreadSummaries(),
+    getThreadMessages(id),
+  ]);
 
   if (!report) notFound();
+
+  const hasPendingMessage = messages.some((message) => message.status === "PENDING");
 
   return (
     <AppShell rail={<ThreadRail threads={threads} />}>
@@ -33,14 +40,14 @@ export default async function ThreadPage({ params }: { params: Promise<{ id: str
         researchStatus={report.researchStatus}
         researchError={report.researchError}
       />
-      <ResearchStatusPoller active={report.researchStatus === "RESEARCHING"} />
+      <ResearchStatusPoller active={report.researchStatus === "RESEARCHING" || hasPendingMessage} />
       <OverviewCard sections={report.sections} companyDomain={report.companyDomain} />
       <RoundsCard
         rounds={report.rounds}
         confirmedTotalRounds={report.confirmedTotalRounds}
         confirmedTotalRoundsSource={report.confirmedTotalRoundsSource}
       />
-      <ChatBar messages={[]} />
+      <ChatBar threadId={report.id} messages={messages} />
     </AppShell>
   );
 }

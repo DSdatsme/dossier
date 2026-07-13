@@ -51,3 +51,12 @@ export interface ThreadReport {
   sections: Record<string, FactView[]>;
   rounds: RoundView[];
 }
+
+export type ChatMessageStatus = "PENDING" | "DONE" | "FAILED";
+
+export interface ChatMessage {
+  id: string;
+  from: "you" | "assistant";
+  text: string;
+  status: ChatMessageStatus;
+}

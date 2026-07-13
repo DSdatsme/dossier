@@ -4,7 +4,7 @@ export interface ParsedFact {
   sourceDetail: string;
 }
 
-const VALID_SECTIONS = new Set([
+export const VALID_SECTIONS = new Set([
   "companySnapshot",
   "fundingNews",
   "companyAtLocation",

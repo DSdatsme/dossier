@@ -9,21 +9,23 @@ export interface ResearchEngine {
   research(input: ResearchInput): Promise<void>;
 }
 
-export type CliRunner = (prompt: string) => Promise<string>;
+export type CliRunner = (prompt: string, threadId: string) => Promise<string>;
 
 const MAX_TURNS = 15;
-const TIMEOUT_MS = 3 * 60 * 1000;
+const TIMEOUT_MS = 10 * 60 * 1000;
+const HEARTBEAT_MS = 30 * 1000;
 
 export class ClaudeCodeCliResearchEngine implements ResearchEngine {
   constructor(private runner: CliRunner = spawnClaudeCli) {}
 
   async research(input: ResearchInput): Promise<void> {
+    console.log(`[research] starting for thread ${input.threadId} (${input.companyName})`);
     try {
       const prompt = buildResearchPrompt(input);
 
       let stdout: string;
       try {
-        stdout = await this.runner(prompt);
+        stdout = await this.runner(prompt, input.threadId);
       } catch (error) {
         await markFailed(input.threadId, describeError(error));
         return;
@@ -61,17 +63,20 @@ export class ClaudeCodeCliResearchEngine implements ResearchEngine {
         where: { id: input.threadId },
         data: { researchStatus: "DONE", researchError: null },
       });
+      console.log(`[research] thread ${input.threadId}: wrote ${facts.length} facts, marked DONE`);
     } catch (error) {
       await markFailed(input.threadId, describeError(error)).catch(() => {
         // Thread may no longer exist (e.g. deleted mid-research) or the DB may be
         // unreachable — there is nothing further to do, but research() must never
         // reject: it runs detached from the Server Action that triggered it.
+        console.error(`[research] thread ${input.threadId}: failed to record failure too (thread likely gone)`);
       });
     }
   }
 }
 
 async function markFailed(threadId: string, message: string): Promise<void> {
+  console.error(`[research] thread ${threadId} FAILED: ${message}`);
   await prisma.thread.update({
     where: { id: threadId },
     data: { researchStatus: "FAILED", researchError: message },
@@ -82,7 +87,7 @@ function describeError(error: unknown): string {
   return error instanceof Error ? error.message : "Unknown error during research.";
 }
 
-export function spawnClaudeCli(prompt: string): Promise<string> {
+export function spawnClaudeCli(prompt: string, threadId: string): Promise<string> {
   return new Promise((resolve, reject) => {
     const child = spawn(
       "claude",
@@ -92,8 +97,20 @@ export function spawnClaudeCli(prompt: string): Promise<string> {
 
     let stdout = "";
     let stderr = "";
+    let elapsedMs = 0;
+
+    const heartbeat = setInterval(() => {
+      elapsedMs += HEARTBEAT_MS;
+      console.log(`[research] thread ${threadId}: still running (${elapsedMs / 1000}s elapsed)`);
+    }, HEARTBEAT_MS);
+
+    const stopTimers = () => {
+      clearTimeout(timer);
+      clearInterval(heartbeat);
+    };
 
     const timer = setTimeout(() => {
+      stopTimers();
       child.kill("SIGKILL");
       reject(new Error("Research run timed out."));
     }, TIMEOUT_MS);
@@ -105,11 +122,11 @@ export function spawnClaudeCli(prompt: string): Promise<string> {
       stderr += chunk;
     });
     child.on("error", (error) => {
-      clearTimeout(timer);
+      stopTimers();
       reject(error);
     });
     child.on("close", (code) => {
-      clearTimeout(timer);
+      stopTimers();
       if (code !== 0) {
         reject(new Error(`claude CLI exited with code ${code}: ${stderr.trim().slice(0, 500)}`));
         return;

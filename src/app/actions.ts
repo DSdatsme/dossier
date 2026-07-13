@@ -1,12 +1,15 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { createThread, deleteThread } from "@/lib/threads";
 import { getThreadSummaries } from "@/lib/reports";
 import { prisma } from "@/lib/db";
 import { ClaudeCodeCliResearchEngine } from "@/lib/researchEngine";
+import { ClaudeCodeCliChatEngine } from "@/lib/chatEngine";
 
 const researchEngine = new ClaudeCodeCliResearchEngine();
+const chatEngine = new ClaudeCodeCliChatEngine();
 
 export async function createThreadAction(formData: FormData) {
   const companyName = String(formData.get("companyName") ?? "").trim();
@@ -76,4 +79,20 @@ export async function deleteThreadAction(formData: FormData) {
     redirect(`/thread/${remaining[0].id}`);
   }
   redirect("/");
+}
+
+export async function sendChatMessageAction(threadId: string, text: string): Promise<void> {
+  const trimmed = text.trim();
+  if (!trimmed) {
+    throw new Error("Message cannot be empty.");
+  }
+
+  await prisma.message.create({ data: { threadId, role: "USER", text: trimmed, status: "DONE" } });
+  const assistantMessage = await prisma.message.create({
+    data: { threadId, role: "ASSISTANT", text: "", status: "PENDING" },
+  });
+
+  void chatEngine.respond(threadId, assistantMessage.id);
+
+  revalidatePath(`/thread/${threadId}`);
 }

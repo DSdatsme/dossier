@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import { ClaudeCodeCliResearchEngine } from "./researchEngine";
 import { createThread, deleteThread } from "./threads";
 import { getThreadReport } from "./reports";
@@ -8,7 +8,12 @@ function fakeEnvelope(resultText: string): string {
 }
 
 describe("ClaudeCodeCliResearchEngine", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("writes valid facts and marks the thread DONE", async () => {
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
     const threadId = await createThread({ companyName: "Test Research Co", position: "Engineer", location: "Remote" });
     const resultText = JSON.stringify({
       facts: [
@@ -33,6 +38,8 @@ describe("ClaudeCodeCliResearchEngine", () => {
     expect(report!.sections.companySnapshot[0].content).toBe("Founded: 2020");
     expect(report!.sections.companySnapshot[0].sourceType).toBe("RESEARCHED");
     expect(report!.sections.techStack[0].content).toBe("Go");
+    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining(`starting for thread ${threadId}`));
+    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining("wrote 2 facts, marked DONE"));
 
     await deleteThread(threadId);
   });
@@ -57,6 +64,7 @@ describe("ClaudeCodeCliResearchEngine", () => {
   });
 
   it("marks the thread FAILED when the runner rejects", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     const threadId = await createThread({ companyName: "Crash Co", position: "Engineer", location: "Remote" });
     const engine = new ClaudeCodeCliResearchEngine(async () => {
       throw new Error("boom");
@@ -73,6 +81,7 @@ describe("ClaudeCodeCliResearchEngine", () => {
     const report = await getThreadReport(threadId);
     expect(report!.researchStatus).toBe("FAILED");
     expect(report!.researchError).toBe("boom");
+    expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining(`thread ${threadId} FAILED: boom`));
 
     await deleteThread(threadId);
   });
@@ -97,6 +106,7 @@ describe("ClaudeCodeCliResearchEngine", () => {
   });
 
   it("never throws — even if the thread is deleted out from under it mid-research", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     const threadId = await createThread({ companyName: "Vanishing Co", position: "Engineer", location: "Remote" });
     const resultText = JSON.stringify({
       facts: [{ section: "companySnapshot", content: "Founded: 2020", sourceDetail: "example.com" }],
@@ -115,5 +125,6 @@ describe("ClaudeCodeCliResearchEngine", () => {
         location: "Remote",
       })
     ).resolves.toBeUndefined();
+    expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining("failed to record failure too"));
   });
 });

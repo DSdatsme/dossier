@@ -52,16 +52,29 @@
 }
 .inputRow input { flex: 1; border: none; background: transparent; color: var(--ink); outline: none; font-size: 0.9rem; }
 .inputRow input:disabled { color: var(--ink-faint); cursor: not-allowed; }
-.soon {
+.send {
   flex: none;
   font-family: var(--font-mono);
-  font-size: 0.62rem;
-  letter-spacing: 0.06em;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--ink-faint);
-  border: 1px solid var(--border);
+  color: var(--accent-ink);
+  background: var(--accent-soft);
   border-radius: 100px;
-  padding: 0.2rem 0.55rem;
+  padding: 0.35rem 0.75rem;
+}
+.send:disabled {
+  color: var(--ink-faint);
+  background: var(--surface-2);
+  cursor: not-allowed;
+}
+.bubble[data-status="PENDING"] {
+  color: var(--ink-faint);
+  font-style: italic;
+}
+.bubble[data-status="FAILED"] {
+  color: var(--status-stopped);
+  background: var(--status-stopped-soft);
 }
 .toggle {
   flex: none;

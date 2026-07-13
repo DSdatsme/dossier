@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { getThreadSummaries, getThreadReport } from "./reports";
+import { prisma } from "./db";
 
 describe("getThreadSummaries", () => {
   it("returns all seeded threads with round counts", async () => {
@@ -56,5 +57,33 @@ describe("getThreadReport", () => {
 
     expect(report!.researchStatus).toBe("DONE");
     expect(report!.researchError).toBeNull();
+  });
+
+  it("excludes a thread-level fact that has been corrected (state EDITED)", async () => {
+    const summaries = await getThreadSummaries();
+    const nimbus = summaries.find((t) => t.companyName === "Nimbus Robotics")!;
+    const before = await getThreadReport(nimbus.id);
+    const targetFact = before!.sections.techStack[0];
+
+    await prisma.fact.update({ where: { id: targetFact.id }, data: { state: "EDITED" } });
+
+    const after = await getThreadReport(nimbus.id);
+    expect(after!.sections.techStack.some((f) => f.id === targetFact.id)).toBe(false);
+
+    await prisma.fact.update({ where: { id: targetFact.id }, data: { state: "ACTIVE" } });
+  });
+
+  it("excludes a round-level fact that has been corrected (state EDITED)", async () => {
+    const summaries = await getThreadSummaries();
+    const nimbus = summaries.find((t) => t.companyName === "Nimbus Robotics")!;
+    const before = await getThreadReport(nimbus.id);
+    const targetFact = before!.rounds[0].prepMaterial[0];
+
+    await prisma.fact.update({ where: { id: targetFact.id }, data: { state: "EDITED" } });
+
+    const after = await getThreadReport(nimbus.id);
+    expect(after!.rounds[0].prepMaterial.some((f) => f.id === targetFact.id)).toBe(false);
+
+    await prisma.fact.update({ where: { id: targetFact.id }, data: { state: "ACTIVE" } });
   });
 });

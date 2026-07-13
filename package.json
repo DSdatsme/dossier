@@ -9,9 +9,13 @@
     "start": "next start",
     "db:push": "prisma db push --accept-data-loss",
     "db:seed": "tsx prisma/seed.ts",
-    "pretest": "npm run db:push && npm run db:seed",
-    "test": "vitest run",
-    "test:watch": "vitest"
+    "local": "export DATABASE_URL=\"file:./local.db\" && next dev",
+    "local:db:push": "export DATABASE_URL=\"file:./local.db\" && npm run db:push",
+    "local:db:seed": "export DATABASE_URL=\"file:./local.db\" && npm run db:seed",
+    "pretest": "export DATABASE_URL=\"file:./test.db\" && npm run db:push && npm run db:seed",
+    "test": "export DATABASE_URL=\"file:./test.db\" && vitest run",
+    "pretest:watch": "export DATABASE_URL=\"file:./test.db\" && npm run db:push && npm run db:seed",
+    "test:watch": "export DATABASE_URL=\"file:./test.db\" && vitest"
   },
   "dependencies": {
     "next": "^15.1.0",
