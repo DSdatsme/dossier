@@ -7,9 +7,11 @@
 
 .head {
   display: flex;
+  width: 100%;
   align-items: center;
   gap: 0.35rem;
   padding: 1.05rem 1.25rem;
+  text-align: left;
 }
 
 .toggle {

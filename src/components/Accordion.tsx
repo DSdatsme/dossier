@@ -15,22 +15,22 @@ export function Accordion({ title, highlight, defaultOpen = false, children }: A
 
   return (
     <article className={styles.card} data-open={open}>
-      <div className={styles.head}>
-        <button
-          type="button"
-          className={styles.toggle}
-          aria-expanded={open}
-          onClick={() => setOpen((current) => !current)}
-        >
+      <button
+        type="button"
+        className={styles.head}
+        aria-expanded={open}
+        onClick={() => setOpen((current) => !current)}
+      >
+        <div className={styles.toggle}>
           <span className={styles.title}>{title}</span>
           {highlight ? <span className={styles.highlight}>{highlight}</span> : null}
-        </button>
+        </div>
         <span className={styles.chevron} aria-hidden="true">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M6 9l6 6 6-6" />
           </svg>
         </span>
-      </div>
+      </button>
       <div className={styles.bodyWrap}>
         <div className={styles.bodyInner}>
           <div className={styles.body}>{children}</div>

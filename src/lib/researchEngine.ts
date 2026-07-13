@@ -128,7 +128,8 @@ export function spawnClaudeCli(prompt: string, threadId: string): Promise<string
     child.on("close", (code) => {
       stopTimers();
       if (code !== 0) {
-        reject(new Error(`claude CLI exited with code ${code}: ${stderr.trim().slice(0, 500)}`));
+        const output = [stderr.trim(), stdout.trim()].filter(Boolean).join(" | ").slice(0, 500);
+        reject(new Error(`claude CLI exited with code ${code}: ${output}`));
         return;
       }
       resolve(stdout);
