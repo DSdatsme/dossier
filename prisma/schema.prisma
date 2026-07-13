@@ -23,6 +23,7 @@ model Thread {
   rounds              Round[]
   facts               Fact[]
   interviewerProfiles InterviewerProfile[]
+  messages            Message[]
 }
 
 model Round {
@@ -100,4 +101,25 @@ enum FactState {
   ACTIVE
   EDITED
   REMOVED
+}
+
+model Message {
+  id        String        @id @default(cuid())
+  threadId  String
+  thread    Thread        @relation(fields: [threadId], references: [id])
+  role      MessageRole
+  text      String
+  status    MessageStatus @default(DONE)
+  createdAt DateTime      @default(now())
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+}
+
+enum MessageStatus {
+  PENDING
+  DONE
+  FAILED
 }
