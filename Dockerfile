@@ -1,4 +1,4 @@
-FROM node:24-slim AS builder
+FROM node:26-slim AS builder
 
 # Prisma's query engine needs libssl; node:slim doesn't ship it, and without
 # it Prisma silently guesses the OpenSSL version instead of detecting it.
@@ -34,7 +34,7 @@ RUN npm run build
 RUN npm prune --omit=dev
 
 # ---- runtime image ----
-FROM node:24-slim
+FROM node:26-slim
 
 # Same libssl requirement as the builder stage, for the same Prisma reason.
 RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
