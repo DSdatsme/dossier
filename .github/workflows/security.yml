@@ -1,0 +1,63 @@
+name: Security
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  schedule:
+    # Weekly, so a newly-disclosed CVE in an existing dependency or base
+    # image is caught even when nothing in the repo has changed.
+    - cron: "0 6 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  dependency-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'npm'
+      - run: npm ci
+      # Scoped to production dependencies only: devDependencies (test
+      # tooling, type stubs) never ship in the Docker image, so a
+      # vulnerability only reachable through them isn't a shipped risk.
+      - run: npm audit --omit=dev --audit-level=high
+
+  dependency-review:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Flag newly-introduced vulnerable or incompatibly-licensed dependencies
+        uses: actions/dependency-review-action@v5
+
+  secret-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Scan for committed secrets
+        uses: gitleaks/gitleaks-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  docker-image-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker build -t dossier:scan .
+      - name: Scan image for known CVEs
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: dossier:scan
+          severity: "CRITICAL,HIGH"
+          exit-code: "1"
+          ignore-unfixed: true
+          trivyignores: .trivyignore

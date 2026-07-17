@@ -1,0 +1,10 @@
+# CVE-2026-12151: undici DoS via unbounded memory.
+#
+# undici here is bundled inside the Node.js runtime itself (part of the
+# node:24-slim base image), not a project dependency — there is nothing in
+# this repo to patch. As of 2026-07-18 no node:24-slim tag with a fixed
+# Node.js patch release exists yet upstream.
+#
+# Remove this line once one does, and re-run the docker-image-scan job to
+# confirm a fresh node:24-slim pull no longer flags it.
+CVE-2026-12151
