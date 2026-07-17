@@ -19,22 +19,22 @@
     "test:watch": "export DATABASE_URL=\"file:./test.db\" && vitest"
   },
   "dependencies": {
-    "next": "^15.1.0",
+    "next": "^16.2.10",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "@prisma/client": "^6.2.0",
-    "prisma": "^6.2.0",
+    "@prisma/client": "^7.8.0",
+    "prisma": "^7.8.0",
     "tsx": "^4.19.0"
   },
   "devDependencies": {
-    "typescript": "^5.7.0",
-    "@types/node": "^22.10.0",
+    "typescript": "^7.0.2",
+    "@types/node": "^26.1.1",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
-    "dotenv": "^16.4.0",
-    "vitest": "^2.1.0",
-    "@vitejs/plugin-react": "^4.3.0",
-    "jsdom": "^25.0.0",
+    "dotenv": "^17.4.2",
+    "vitest": "^4.1.10",
+    "@vitejs/plugin-react": "^6.0.3",
+    "jsdom": "^29.1.1",
     "@testing-library/react": "^16.1.0",
     "@testing-library/jest-dom": "^6.6.0",
     "@testing-library/user-event": "^14.5.0"
