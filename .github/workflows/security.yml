@@ -54,7 +54,7 @@ jobs:
       - name: Build image
         run: docker build -t dossier:scan .
       - name: Scan image for known CVEs
-        uses: aquasecurity/trivy-action@0.36.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: dossier:scan
           severity: "CRITICAL,HIGH"
