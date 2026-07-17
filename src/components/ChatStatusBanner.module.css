@@ -1,0 +1,21 @@
+.banner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.1rem;
+  font-size: 0.82rem;
+  font-style: italic;
+  color: var(--ink-faint);
+}
+.dot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--status-upcoming);
+  animation: chatBannerPulse 1.4s ease-in-out infinite;
+}
+@keyframes chatBannerPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}

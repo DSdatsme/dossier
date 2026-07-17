@@ -63,6 +63,7 @@ export function ChatBar({ threadId, messages }: { threadId: string; messages: Ch
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M18 15l-6-6-6 6" />
           </svg>
+          {hasPendingReply && <span className={styles.processingBadge} aria-label="Assistant is processing" />}
         </button>
       </form>
     </div>

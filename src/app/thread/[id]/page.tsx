@@ -8,8 +8,15 @@ import { RoundsCard } from "@/components/RoundsCard";
 import { ChatBar } from "@/components/ChatBar";
 import { DeleteThreadButton } from "@/components/DeleteThreadButton";
 import { ResearchStatusBanner } from "@/components/ResearchStatusBanner";
+import { ChatStatusBanner } from "@/components/ChatStatusBanner";
 import { ResearchStatusPoller } from "@/components/ResearchStatusPoller";
 import styles from "./page.module.css";
+
+// The sidebar and report both reflect live DB state that changes whenever any
+// thread is created/deleted/chatted with elsewhere — this page must never be
+// served from Next's route cache, or a previously-visited thread page would
+// keep showing a stale sidebar snapshot from before that change happened.
+export const dynamic = "force-dynamic";
 
 export default async function ThreadPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -40,6 +47,7 @@ export default async function ThreadPage({ params }: { params: Promise<{ id: str
         researchStatus={report.researchStatus}
         researchError={report.researchError}
       />
+      <ChatStatusBanner active={hasPendingMessage} />
       <ResearchStatusPoller active={report.researchStatus === "RESEARCHING" || hasPendingMessage} />
       <OverviewCard sections={report.sections} companyDomain={report.companyDomain} />
       <RoundsCard
