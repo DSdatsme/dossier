@@ -6,7 +6,7 @@ import type { ThreadSummary } from "@/lib/types";
 import styles from "./ThreadRail.module.css";
 
 function progressLabel(thread: ThreadSummary): string {
-  const fraction = thread.totalRounds != null ? `${thread.completedRounds}/${thread.totalRounds}` : `${thread.completedRounds}/—`;
+  const fraction = thread.totalRounds != null ? `${thread.completedRounds}/${thread.totalRounds}` : `${thread.completedRounds}/?`;
   return thread.hasNotHappeningRound ? `${fraction} · skipped` : fraction;
 }
 

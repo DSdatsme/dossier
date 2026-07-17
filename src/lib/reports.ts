@@ -12,19 +12,25 @@ function toFactView(fact: { id: string; content: string; sourceType: string; sou
 
 export async function getThreadSummaries(): Promise<ThreadSummary[]> {
   const threads = await prisma.thread.findMany({
-    include: { rounds: true },
-    orderBy: { createdAt: "asc" },
+    include: {
+      rounds: true,
+      messages: { orderBy: { createdAt: "desc" }, take: 1 },
+    },
   });
 
-  return threads.map((thread) => ({
-    id: thread.id,
-    companyName: thread.companyName,
-    position: thread.position,
-    location: thread.location,
-    completedRounds: thread.rounds.filter((r) => r.status === "COMPLETED").length,
-    totalRounds: thread.confirmedTotalRounds,
-    hasNotHappeningRound: thread.rounds.some((r) => r.status === "NOT_HAPPENING"),
-  }));
+  return threads
+    .map((thread) => ({
+      id: thread.id,
+      companyName: thread.companyName,
+      position: thread.position,
+      location: thread.location,
+      completedRounds: thread.rounds.filter((r) => r.status === "COMPLETED").length,
+      totalRounds: thread.confirmedTotalRounds,
+      hasNotHappeningRound: thread.rounds.some((r) => r.status === "NOT_HAPPENING"),
+      lastActivityAt: thread.messages[0]?.createdAt ?? thread.createdAt,
+    }))
+    .sort((a, b) => b.lastActivityAt.getTime() - a.lastActivityAt.getTime())
+    .map(({ lastActivityAt, ...summary }) => summary);
 }
 
 export async function getThreadReport(threadId: string): Promise<ThreadReport | null> {

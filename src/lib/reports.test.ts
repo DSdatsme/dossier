@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { getThreadSummaries, getThreadReport } from "./reports";
+import { deleteThread } from "./threads";
 import { prisma } from "./db";
 
 describe("getThreadSummaries", () => {
@@ -15,6 +16,39 @@ describe("getThreadSummaries", () => {
     const acme = summaries.find((t) => t.companyName === "Acme Corp");
     expect(acme!.completedRounds).toBe(0);
     expect(acme!.totalRounds).toBeNull();
+  });
+
+  it("orders threads by most recent chat activity first, falling back to creation time for threads with no messages", async () => {
+    const older = await prisma.thread.create({
+      data: { companyName: "Older Chat Co", position: "Engineer", location: "Remote", createdAt: new Date("2020-01-01") },
+    });
+    const newer = await prisma.thread.create({
+      data: { companyName: "Newer Chat Co", position: "Engineer", location: "Remote", createdAt: new Date("2020-01-02") },
+    });
+    const neverChatted = await prisma.thread.create({
+      data: { companyName: "Never Chatted Co", position: "Engineer", location: "Remote", createdAt: new Date("2020-01-03") },
+    });
+
+    // Chat activity reverses the creation-time order: `older` was chatted
+    // with most recently, so it should rank above `newer` despite being
+    // created first. `neverChatted` has no messages, so it falls back to its
+    // own (older) creation time and ranks last.
+    await prisma.message.create({
+      data: { threadId: newer.id, role: "USER", text: "hi", status: "DONE", createdAt: new Date("2020-02-01") },
+    });
+    await prisma.message.create({
+      data: { threadId: older.id, role: "USER", text: "hi", status: "DONE", createdAt: new Date("2020-03-01") },
+    });
+
+    const summaries = await getThreadSummaries();
+    const ids = new Set([older.id, newer.id, neverChatted.id]);
+    const relativeOrder = summaries.map((t) => t.id).filter((id) => ids.has(id));
+
+    expect(relativeOrder).toEqual([older.id, newer.id, neverChatted.id]);
+
+    await deleteThread(older.id);
+    await deleteThread(newer.id);
+    await deleteThread(neverChatted.id);
   });
 });
 

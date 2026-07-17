@@ -18,7 +18,7 @@ describe("ThreadRail", () => {
     expect(screen.getByText("Nimbus Robotics")).toBeInTheDocument();
     expect(screen.getByText("Foo Inc")).toBeInTheDocument();
     expect(screen.getByText("2/4 · skipped")).toBeInTheDocument();
-    expect(screen.getByText("0/—")).toBeInTheDocument();
+    expect(screen.getByText("0/?")).toBeInTheDocument();
   });
 
   it("marks the thread matching the current route as active", () => {

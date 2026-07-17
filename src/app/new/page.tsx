@@ -4,6 +4,10 @@ import { ThreadRail } from "@/components/ThreadRail";
 import { getThreadSummaries } from "@/lib/reports";
 import styles from "./page.module.css";
 
+// Same reasoning as the thread page: the sidebar reflects live DB state, so
+// this page must never be served from Next's route cache.
+export const dynamic = "force-dynamic";
+
 export default async function NewThreadPage() {
   const threads = await getThreadSummaries();
 
