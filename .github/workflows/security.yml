@@ -16,6 +16,12 @@ permissions:
 jobs:
   dependency-audit:
     runs-on: ubuntu-latest
+    env:
+      # prisma.config.ts resolves DATABASE_URL eagerly, and npm ci's
+      # postinstall step runs `prisma generate`, which loads that config —
+      # so this needs to be set before npm ci runs. Never touches a real
+      # dev.db/local.db.
+      DATABASE_URL: "file:./ci-audit.db"
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
