@@ -6,22 +6,52 @@ on:
   pull_request:
     branches: [ "main" ]
 
+permissions:
+  contents: read
+
 jobs:
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: 'npm'
+      - run: npm ci
+      - run: npx tsc --noEmit
+
   test:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: 'npm'
+      - run: npm ci
+      - run: npm test
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: 20
-        cache: 'npm'
+  build:
+    runs-on: ubuntu-latest
+    env:
+      # Throwaway build-time database — matches the Dockerfile's own
+      # build-stage approach. Never touches a real dev.db/local.db.
+      DATABASE_URL: "file:./ci-build.db"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: 'npm'
+      - run: npm ci
+      - name: Prepare database for build
+        run: npm run db:push
+      - run: npm run build
 
-    - name: Install dependencies
-      run: npm ci
-
-    - name: Run tests
-      run: npm test
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build Docker image
+        run: docker build -t dossier:ci .
