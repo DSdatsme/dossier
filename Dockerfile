@@ -6,13 +6,6 @@ RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists
 
 WORKDIR /app
 
-# Install dependencies first so this layer is cached across source-only changes.
-COPY package.json package-lock.json ./
-COPY prisma/schema.prisma ./prisma/schema.prisma
-RUN npm ci
-
-COPY . .
-
 # `next build` statically prerenders the home page, which queries the
 # database, so a schema needs to exist before building. This pushes it to a
 # throwaway build-time database rather than /app/data: /app/data must stay
@@ -20,7 +13,19 @@ COPY . .
 # volume there, it starts genuinely empty instead of being pre-populated
 # from image content (Docker's default behavior for a new named volume
 # mounted over an existing directory).
+#
+# Set before `npm ci`: prisma.config.ts loads DATABASE_URL eagerly, and
+# `npm ci`'s postinstall step runs `prisma generate`, which loads that config.
 ENV DATABASE_URL="file:/tmp/build.db"
+
+# Install dependencies first so this layer is cached across source-only changes.
+COPY package.json package-lock.json ./
+COPY prisma/schema.prisma ./prisma/schema.prisma
+COPY prisma.config.ts ./prisma.config.ts
+RUN npm ci
+
+COPY . .
+
 RUN npx prisma db push --accept-data-loss
 RUN npm run build
 
@@ -46,6 +51,7 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/next.config.ts ./next.config.ts
 COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 COPY --from=builder /app/docker-entrypoint.sh ./docker-entrypoint.sh
 
 # Real runtime database — persisted via the docker-compose volume at /app/data.
