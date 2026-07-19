@@ -41,6 +41,14 @@ jobs:
       - uses: actions/checkout@v7
       - name: Flag newly-introduced vulnerable or incompatibly-licensed dependencies
         uses: actions/dependency-review-action@v5
+        with:
+          # GHSA-92pp-h63x-v22m (@hono/node-server, moderate): pulled in
+          # transitively by @prisma/dev, Prisma's bundled dev-server/Studio
+          # tooling. Only reachable via `prisma dev`/`prisma studio`, which
+          # this project never invokes (only `db push`/`generate` at
+          # runtime). Revisit if Prisma ships a patched @prisma/dev, or if
+          # this project starts using prisma dev/studio.
+          allow-ghsas: GHSA-92pp-h63x-v22m
 
   secret-scan:
     runs-on: ubuntu-latest
