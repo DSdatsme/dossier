@@ -48,7 +48,9 @@ export default async function ThreadPage({ params }: { params: Promise<{ id: str
         researchError={report.researchError}
       />
       <ChatStatusBanner active={hasPendingMessage} />
-      <ResearchStatusPoller active={report.researchStatus === "RESEARCHING" || hasPendingMessage} />
+      <ResearchStatusPoller
+        active={report.researchStatus === "RESEARCHING" || hasPendingMessage || report.researchingSections.length > 0}
+      />
       <OverviewCard sections={report.sections} companyDomain={report.companyDomain} />
       <RoundsCard
         rounds={report.rounds}
