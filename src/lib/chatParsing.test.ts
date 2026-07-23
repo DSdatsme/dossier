@@ -206,6 +206,21 @@ Actual:
 
     expect(parseChatResponse(text)).toEqual({ reply: "On it.", operations: [] });
   });
+
+  // Regression test: SECTION_TO_BUILDER is a plain object, so a naive `section in
+  // SECTION_TO_BUILDER` check would incorrectly accept inherited Object.prototype
+  // property names as valid sections.
+  it.each(["constructor", "toString", "hasOwnProperty", "__proto__"])(
+    "drops a researchSection operation targeting the inherited object property \"%s\"",
+    (section) => {
+      const text = JSON.stringify({
+        reply: "On it.",
+        operations: [{ op: "researchSection", section, focusNote: "" }],
+      });
+
+      expect(parseChatResponse(text)).toEqual({ reply: "On it.", operations: [] });
+    }
+  );
 });
 
 describe("parseChatVerifyResponse", () => {

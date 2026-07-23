@@ -117,7 +117,7 @@ function validateOperation(raw: unknown): ChatOperation | null {
       return null;
     }
     case "researchSection": {
-      if (isNonEmptyString(record.section) && record.section in SECTION_TO_BUILDER) {
+      if (isNonEmptyString(record.section) && Object.prototype.hasOwnProperty.call(SECTION_TO_BUILDER, record.section)) {
         const focusNote = typeof record.focusNote === "string" ? record.focusNote.trim() : "";
         return { op: "researchSection", section: record.section, focusNote };
       }
