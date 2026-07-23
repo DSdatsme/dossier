@@ -120,4 +120,15 @@ describe("getThreadReport", () => {
 
     await prisma.fact.update({ where: { id: targetFact.id }, data: { state: "ACTIVE" } });
   });
+
+  it("exposes sections currently being re-researched via chat", async () => {
+    const summaries = await getThreadSummaries();
+    const nimbus = summaries.find((t) => t.companyName === "Nimbus Robotics")!;
+
+    await prisma.sectionResearchJob.create({ data: { threadId: nimbus.id, section: "compensation" } });
+    const report = await getThreadReport(nimbus.id);
+    expect(report!.researchingSections).toEqual(["compensation"]);
+
+    await prisma.sectionResearchJob.deleteMany({ where: { threadId: nimbus.id } });
+  });
 });

@@ -45,6 +45,7 @@ export async function getThreadReport(threadId: string): Promise<ThreadReport | 
           interviewerLinks: { include: { profile: true } },
         },
       },
+      sectionResearchJobs: true,
     },
   });
 
@@ -90,6 +91,7 @@ export async function getThreadReport(threadId: string): Promise<ThreadReport | 
     confirmedTotalRoundsSource: thread.confirmedTotalRoundsSource,
     researchStatus: thread.researchStatus,
     researchError: thread.researchError,
+    researchingSections: thread.sectionResearchJobs.map((job) => job.section),
     sections,
     rounds,
   };

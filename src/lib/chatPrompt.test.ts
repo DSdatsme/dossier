@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildChatPrompt } from "./chatPrompt";
+import { buildChatPrompt, buildChatVerifyPrompt } from "./chatPrompt";
 import type { ThreadReport } from "./types";
 
 function fixtureReport(overrides: Partial<ThreadReport> = {}): ThreadReport {
@@ -13,6 +13,7 @@ function fixtureReport(overrides: Partial<ThreadReport> = {}): ThreadReport {
     confirmedTotalRoundsSource: null,
     researchStatus: "DONE",
     researchError: null,
+    researchingSections: [],
     sections: {
       compensation: [
         { id: "fct-1", content: "Role: ~$180k-$210k", sourceType: "USER_PROVIDED", sourceDetail: "you" },
@@ -57,7 +58,7 @@ describe("buildChatPrompt", () => {
     expect(prompt).toContain("Jordan Lee");
   });
 
-  it("lists all 9 valid thread-level section names, the 3 round-level section names, and the 3 round statuses", () => {
+  it("lists all 10 valid thread-level section names, the 3 round-level section names, and the 3 round statuses", () => {
     const prompt = buildChatPrompt({ report: fixtureReport(), history: [], newMessage: "hello" });
 
     for (const section of [
@@ -70,6 +71,7 @@ describe("buildChatPrompt", () => {
       "compensation",
       "redFlags",
       "sources",
+      "interviewProcess",
       "prepMaterial",
       "smartQuestions",
       "yourNotes",
@@ -107,5 +109,45 @@ describe("buildChatPrompt", () => {
     expect(prompt).toContain('"reply"');
     expect(prompt).toContain('"operations"');
     expect(prompt.toLowerCase()).toContain("fabricat");
+  });
+
+  it("instructs asking for clarification instead of forcing a conflicting round-structure description into an existing round", () => {
+    const prompt = buildChatPrompt({ report: fixtureReport(), history: [], newMessage: "hello" });
+    expect(prompt.toLowerCase()).toContain("conflicts with the round structure already in the current state");
+  });
+
+  it("instructs not guessing while also hedging in the reply", () => {
+    const prompt = buildChatPrompt({ report: fixtureReport(), history: [], newMessage: "hello" });
+    expect(prompt.toLowerCase()).toContain("do not both guess and hedge");
+  });
+
+  it("includes worked examples", () => {
+    const prompt = buildChatPrompt({ report: fixtureReport(), history: [], newMessage: "hello" });
+    expect(prompt).toContain("Examples:");
+    expect(prompt).toContain("recruiter said the range is 150-170k");
+  });
+});
+
+describe("buildChatVerifyPrompt", () => {
+  it("includes the current state, the user's message, and the proposed operations", () => {
+    const operations = [{ op: "setConfirmedTotalRounds", count: 4, sourceDetail: "recruiter email" }];
+    const prompt = buildChatVerifyPrompt({ report: fixtureReport(), newMessage: "There are 4 rounds total.", operations });
+
+    expect(prompt).toContain("fct-1");
+    expect(prompt).toContain('"There are 4 rounds total."');
+    expect(prompt).toContain('"setConfirmedTotalRounds"');
+  });
+
+  it("instructs JSON-only output with confirmedOperations and a clarifyingNote, and never adding new operations", () => {
+    const prompt = buildChatVerifyPrompt({ report: fixtureReport(), newMessage: "hello", operations: [] });
+
+    expect(prompt).toContain('"confirmedOperations"');
+    expect(prompt).toContain('"clarifyingNote"');
+    expect(prompt.toLowerCase()).toContain("never add a new operation");
+  });
+
+  it("references the guess-and-hedge failure mode explicitly", () => {
+    const prompt = buildChatVerifyPrompt({ report: fixtureReport(), newMessage: "hello", operations: [] });
+    expect(prompt.toLowerCase()).toContain("guessing");
   });
 });

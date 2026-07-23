@@ -48,6 +48,7 @@ export interface ThreadReport {
   confirmedTotalRoundsSource: string | null;
   researchStatus: ResearchStatusView;
   researchError: string | null;
+  researchingSections: string[];
   sections: Record<string, FactView[]>;
   rounds: RoundView[];
 }
