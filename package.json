@@ -10,13 +10,15 @@
     "start": "next start",
     "db:push": "prisma db push --accept-data-loss",
     "db:seed": "tsx prisma/seed.ts",
-    "local": "export DATABASE_URL=\"file:./local.db\" && next dev",
-    "local:db:push": "export DATABASE_URL=\"file:./local.db\" && npm run db:push",
-    "local:db:seed": "export DATABASE_URL=\"file:./local.db\" && npm run db:seed",
+    "local": "export DATABASE_URL=\"file:./prisma/local.db\" && next dev",
+    "local:db:push": "export DATABASE_URL=\"file:./prisma/local.db\" && npm run db:push",
+    "local:db:seed": "export DATABASE_URL=\"file:./prisma/local.db\" && npm run db:seed",
     "pretest": "export DATABASE_URL=\"file:./test.db\" && npm run db:push && npm run db:seed",
     "test": "export DATABASE_URL=\"file:./test.db\" && vitest run",
     "pretest:watch": "export DATABASE_URL=\"file:./test.db\" && npm run db:push && npm run db:seed",
-    "test:watch": "export DATABASE_URL=\"file:./test.db\" && vitest"
+    "test:watch": "export DATABASE_URL=\"file:./test.db\" && vitest",
+    "pretest:integration": "export DATABASE_URL=\"file:./integration-test.db\" && npm run db:push",
+    "test:integration": "export DATABASE_URL=\"file:./integration-test.db\" && RUN_INTEGRATION_TESTS=1 vitest run --testTimeout=1800000 src/lib/researchEngine.integration.test.ts src/lib/chatEngine.integration.test.ts"
   },
   "dependencies": {
     "@prisma/adapter-better-sqlite3": "^7.8.0",

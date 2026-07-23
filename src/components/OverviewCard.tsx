@@ -325,6 +325,11 @@ export function OverviewCard({
       </section>
 
       <section className={styles.sectionFull}>
+        <h3 className={styles.label}>Interview Process</h3>
+        <FactList facts={sections.interviewProcess ?? []} />
+      </section>
+
+      <section className={styles.sectionFull}>
         <h3 className={styles.label}>Red Flags / Things to Know</h3>
         <FactList facts={sections.redFlags ?? []} />
       </section>

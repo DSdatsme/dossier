@@ -84,7 +84,19 @@ describe("OverviewCard", () => {
 
   it("shows an empty-state message for variable-length sections (not the fixed slots) when there is no data", () => {
     render(<OverviewCard companyDomain={null} sections={{}} />);
-    // Culture & Values, Funding & News, Tech Stack, Compensation, Red Flags, Sources
-    expect(screen.getAllByText("Nothing specific found yet.")).toHaveLength(6);
+    // Culture & Values, Funding & News, Tech Stack, Compensation, Interview Process, Red Flags, Sources
+    expect(screen.getAllByText("Nothing specific found yet.")).toHaveLength(7);
+  });
+
+  it("renders interviewProcess facts under an Interview Process heading", () => {
+    render(
+      <OverviewCard
+        companyDomain={null}
+        sections={{ interviewProcess: [researched("Commonly 4 rounds over 3 weeks.")] }}
+      />
+    );
+
+    expect(screen.getByText("Interview Process")).toBeInTheDocument();
+    expect(screen.getByText("Commonly 4 rounds over 3 weeks.")).toBeInTheDocument();
   });
 });

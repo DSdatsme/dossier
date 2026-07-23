@@ -2,6 +2,7 @@ export interface ParsedFact {
   section: string;
   content: string;
   sourceDetail: string;
+  sourceUrl?: string;
 }
 
 export const VALID_SECTIONS = new Set([
@@ -14,6 +15,7 @@ export const VALID_SECTIONS = new Set([
   "compensation",
   "redFlags",
   "sources",
+  "interviewProcess",
 ]);
 
 export function extractJsonBlocks(text: string): string[] {
@@ -67,11 +69,12 @@ function tryParseCandidate(jsonBlock: string): ParsedFact[] | null {
       (raw as { content: string }).content.trim().length > 0 &&
       VALID_SECTIONS.has((raw as { section: string }).section)
     ) {
-      const record = raw as { section: string; content: string; sourceDetail?: unknown };
+      const record = raw as { section: string; content: string; sourceDetail?: unknown; sourceUrl?: unknown };
       facts.push({
         section: record.section,
         content: record.content,
         sourceDetail: typeof record.sourceDetail === "string" ? record.sourceDetail : "web research",
+        ...(typeof record.sourceUrl === "string" ? { sourceUrl: record.sourceUrl } : {}),
       });
     }
   }
