@@ -519,6 +519,38 @@ describe("researchSectionInBackground", () => {
     await deleteThread(threadId);
   });
 
+  // Regression test: SECTION_TO_BUILDER routes a single targeted section to a
+  // cluster builder that covers multiple sections (e.g. "redFlags" runs
+  // buildEmployeeExperiencePrompt, which also returns "cultureValues" and every
+  // cluster's "sources" facts). Each fact must be written under its own
+  // fact.section, not force-labeled as the section the user targeted.
+  it("writes each returned fact under its own section, not the single targeted section", async () => {
+    const threadId = await createThread({ companyName: "Multi Section Co", position: "Engineer", location: "Remote" });
+    await prisma.sectionResearchJob.create({ data: { threadId, section: "redFlags" } });
+
+    const clusterResponse = [
+      { section: "redFlags", content: "Layoffs reported in 2026.", sourceDetail: "business news" },
+      { section: "cultureValues", content: "Glassdoor: 3.8/5, 500 reviews", sourceDetail: "glassdoor.com" },
+      { section: "sources", content: "glassdoor.com — ratings and reviews", sourceDetail: "Glassdoor" },
+    ];
+
+    await researchSectionInBackground(
+      async () => researchEnvelope(clusterResponse),
+      async () => researchEnvelope(clusterResponse),
+      threadId,
+      "redFlags",
+      "",
+      { companyName: "Multi Section Co", companyDomain: null, position: "Engineer", location: "Remote" }
+    );
+
+    const facts = await prisma.fact.findMany({ where: { threadId } });
+    expect(facts.find((f) => f.content === "Layoffs reported in 2026.")).toMatchObject({ section: "redFlags" });
+    expect(facts.find((f) => f.content === "Glassdoor: 3.8/5, 500 reviews")).toMatchObject({ section: "cultureValues" });
+    expect(facts.find((f) => f.content === "glassdoor.com — ratings and reviews")).toMatchObject({ section: "sources" });
+
+    await deleteThread(threadId);
+  });
+
   it("only writes the facts the dedup pass keeps, leaving existing facts untouched", async () => {
     const threadId = await createThread({ companyName: "Dedup Co", position: "Engineer", location: "Remote" });
     await prisma.fact.create({

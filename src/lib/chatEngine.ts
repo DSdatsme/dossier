@@ -204,7 +204,16 @@ export async function researchSectionInBackground(
     const newFacts = parseResearchFacts(envelope.result);
     if (newFacts.length === 0) return;
 
-    const existing = await prisma.fact.findMany({ where: { threadId, section, roundId: null, state: "ACTIVE" } });
+    // The cluster builder for this section may legitimately return facts for other
+    // sections it shares a cluster with (e.g. targeting "redFlags" runs
+    // buildEmployeeExperiencePrompt, which also covers "cultureValues"), plus
+    // "sources" facts every cluster prompt asks for — so dedup against existing
+    // facts across every section newFacts actually touches, not just the one
+    // the user targeted.
+    const newFactSections = Array.from(new Set(newFacts.map((fact) => fact.section)));
+    const existing = await prisma.fact.findMany({
+      where: { threadId, section: { in: newFactSections }, roundId: null, state: "ACTIVE" },
+    });
     const existingFacts = existing.map((fact) => ({ section: fact.section, content: fact.content, sourceDetail: fact.sourceDetail }));
 
     let factsToAdd = newFacts;
@@ -223,7 +232,7 @@ export async function researchSectionInBackground(
       await prisma.fact.createMany({
         data: factsToAdd.map((fact) => ({
           threadId,
-          section,
+          section: fact.section,
           content: fact.content,
           sourceType: "RESEARCHED" as const,
           sourceDetail: fact.sourceDetail,
