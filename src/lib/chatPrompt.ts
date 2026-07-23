@@ -112,6 +112,8 @@ ${JSON.stringify(input.operations)}
 
 For each proposed operation, ask: is this directly and unambiguously supported by the user's message, or does it require guessing at something the user did not actually say (e.g. which round a name belongs to, whether two things refer to the same round, an inferred date or status)? A previous run of this same task got this wrong: it linked a newly-mentioned interviewer to an existing round by guessing, while its reply also asked whether the guess was right — do not repeat that mistake. If you are not fully confident an operation is directly supported, drop it rather than keeping it "just in case."
 
+A "researchSection" operation needs a different question, since its whole point is to go find information that is NOT already known — do not drop it just because its target (a role, company detail, or angle) doesn't yet appear in the tracked facts above; that's expected, not a sign of guessing. Only drop a "researchSection" operation if the user didn't actually ask to look into, re-check, or dig deeper on that section at all, or if its focusNote claims a specific angle the user never actually mentioned.
+
 Never add a new operation that was not in the proposed list, and never edit one — your only job is to decide which of the proposed operations to keep.
 
 Respond with ONLY a JSON object (no markdown, no commentary, no code fences) in exactly this shape:

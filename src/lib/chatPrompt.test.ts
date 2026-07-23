@@ -206,4 +206,15 @@ describe("buildChatVerifyPrompt", () => {
     const prompt = buildChatVerifyPrompt({ report: fixtureReport(), newMessage: "hello", operations: [] });
     expect(prompt.toLowerCase()).toContain("guessing");
   });
+
+  // Regression test: live testing showed the verify pass rejecting nearly every
+  // researchSection operation, reasoning that its target (a role/company detail)
+  // "doesn't appear in the tracked facts" — the same "don't guess" lens applied to
+  // addFact/correctFact, which is the wrong question for an operation whose entire
+  // point is to go find something not yet known.
+  it("instructs not dropping researchSection just because its target isn't already a tracked fact", () => {
+    const prompt = buildChatVerifyPrompt({ report: fixtureReport(), newMessage: "hello", operations: [] });
+    expect(prompt.toLowerCase()).toContain('"researchsection" operation needs a different question');
+    expect(prompt.toLowerCase()).toContain("not already known");
+  });
 });
