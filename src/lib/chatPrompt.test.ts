@@ -148,6 +148,20 @@ describe("buildChatPrompt", () => {
     expect(prompt.toLowerCase()).toContain("background research pass");
   });
 
+  // Regression test: the prior test only checks that each of the 9 researchable
+  // section names appears SOMEWHERE in the prompt — but all 9 also already appear
+  // in the unrelated, 10-entry THREAD_SECTIONS list used by addFact, so an
+  // accidental aliasing of RESEARCHABLE_SECTIONS to THREAD_SECTIONS would still
+  // pass that test. Pin the exact researchSection shape line, in order, to prove
+  // it's genuinely the 9-entry list and not the 10-entry one (which includes
+  // "sources").
+  it("pins the researchSection section list to exactly the 9 targetable sections, in order, excluding sources", () => {
+    const prompt = buildChatPrompt({ report: fixtureReport(), history: [], newMessage: "hello" });
+    expect(prompt).toContain(
+      '"op":"researchSection","section":"<one of: companySnapshot, fundingNews, cultureValues, redFlags, roleSpecifics, techStack, companyAtLocation, compensation, interviewProcess>"'
+    );
+  });
+
   it("includes a worked example for researchSection with a specific focus note", () => {
     const prompt = buildChatPrompt({ report: fixtureReport(), history: [], newMessage: "hello" });
     expect(prompt).toContain("look harder at the DevRel-specific compensation");
