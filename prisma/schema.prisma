@@ -23,6 +23,7 @@ model Thread {
   facts               Fact[]
   interviewerProfiles InterviewerProfile[]
   messages            Message[]
+  sectionResearchJobs SectionResearchJob[]
 }
 
 model Round {
@@ -121,4 +122,14 @@ enum MessageStatus {
   PENDING
   DONE
   FAILED
+}
+
+model SectionResearchJob {
+  id        String   @id @default(cuid())
+  threadId  String
+  thread    Thread   @relation(fields: [threadId], references: [id])
+  section   String
+  createdAt DateTime @default(now())
+
+  @@unique([threadId, section])
 }
