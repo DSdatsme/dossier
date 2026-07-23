@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseChatResponse } from "./chatParsing";
+import { parseChatResponse, parseChatVerifyResponse } from "./chatParsing";
 
 describe("parseChatResponse", () => {
   it("parses a reply with no operations", () => {
@@ -114,17 +114,17 @@ describe("parseChatResponse", () => {
     expect(parseChatResponse(JSON.stringify({ reply: "ok", operations: "not an array" }))).toBeNull();
   });
 
-  it("rejects the whole response when any single operation has an invalid section", () => {
+  it("drops an operation with an invalid section but keeps the reply", () => {
     const text = JSON.stringify({
       reply: "ok",
       operations: [
         { op: "addFact", scope: "thread", section: "notARealSection", content: "x", sourceDetail: "you" },
       ],
     });
-    expect(parseChatResponse(text)).toBeNull();
+    expect(parseChatResponse(text)).toEqual({ reply: "ok", operations: [] });
   });
 
-  it("rejects the whole response when one operation among several valid ones is invalid", () => {
+  it("drops only the invalid operation, keeping the valid ones from the same turn", () => {
     const text = JSON.stringify({
       reply: "ok",
       operations: [
@@ -132,21 +132,24 @@ describe("parseChatResponse", () => {
         { op: "updateRoundStatus", roundRef: "Onsite", status: "NOT_A_REAL_STATUS" },
       ],
     });
-    expect(parseChatResponse(text)).toBeNull();
+    expect(parseChatResponse(text)).toEqual({
+      reply: "ok",
+      operations: [{ op: "addFact", scope: "thread", section: "compensation", content: "x", sourceDetail: "you" }],
+    });
   });
 
-  it("rejects an operation with an unknown op name", () => {
+  it("drops an operation with an unknown op name", () => {
     const text = JSON.stringify({ reply: "ok", operations: [{ op: "deleteEverything" }] });
-    expect(parseChatResponse(text)).toBeNull();
+    expect(parseChatResponse(text)).toEqual({ reply: "ok", operations: [] });
   });
 
-  it("rejects setConfirmedTotalRounds with a non-positive or non-integer count", () => {
+  it("drops setConfirmedTotalRounds with a non-positive or non-integer count", () => {
     expect(
       parseChatResponse(JSON.stringify({ reply: "ok", operations: [{ op: "setConfirmedTotalRounds", count: 0, sourceDetail: "you" }] }))
-    ).toBeNull();
+    ).toEqual({ reply: "ok", operations: [] });
     expect(
       parseChatResponse(JSON.stringify({ reply: "ok", operations: [{ op: "setConfirmedTotalRounds", count: 2.5, sourceDetail: "you" }] }))
-    ).toBeNull();
+    ).toEqual({ reply: "ok", operations: [] });
   });
 
   it("prefers the last fenced JSON block over an earlier placeholder/example block", () => {
@@ -160,5 +163,90 @@ Actual:
 {"reply": "real reply", "operations": []}
 \`\`\``;
     expect(parseChatResponse(text)).toEqual({ reply: "real reply", operations: [] });
+  });
+
+  it("parses a valid researchSection operation with a focus note", () => {
+    const text = JSON.stringify({
+      reply: "On it.",
+      operations: [{ op: "researchSection", section: "compensation", focusNote: "Focus on DevRel comp specifically." }],
+    });
+
+    expect(parseChatResponse(text)).toEqual({
+      reply: "On it.",
+      operations: [{ op: "researchSection", section: "compensation", focusNote: "Focus on DevRel comp specifically." }],
+    });
+  });
+
+  it("parses a researchSection operation with no focus note, defaulting to an empty string", () => {
+    const text = JSON.stringify({
+      reply: "On it.",
+      operations: [{ op: "researchSection", section: "techStack" }],
+    });
+
+    expect(parseChatResponse(text)).toEqual({
+      reply: "On it.",
+      operations: [{ op: "researchSection", section: "techStack", focusNote: "" }],
+    });
+  });
+
+  it("drops a researchSection operation targeting a non-researchable section like sources", () => {
+    const text = JSON.stringify({
+      reply: "On it.",
+      operations: [{ op: "researchSection", section: "sources", focusNote: "" }],
+    });
+
+    expect(parseChatResponse(text)).toEqual({ reply: "On it.", operations: [] });
+  });
+
+  it("drops a researchSection operation targeting an unknown section", () => {
+    const text = JSON.stringify({
+      reply: "On it.",
+      operations: [{ op: "researchSection", section: "notARealSection", focusNote: "" }],
+    });
+
+    expect(parseChatResponse(text)).toEqual({ reply: "On it.", operations: [] });
+  });
+});
+
+describe("parseChatVerifyResponse", () => {
+  it("parses confirmed operations and a clarifying note", () => {
+    const text = JSON.stringify({
+      confirmedOperations: [{ op: "setConfirmedTotalRounds", count: 4, sourceDetail: "recruiter email" }],
+      clarifyingNote: "Which round is the leadership round?",
+    });
+
+    expect(parseChatVerifyResponse(text)).toEqual({
+      operations: [{ op: "setConfirmedTotalRounds", count: 4, sourceDetail: "recruiter email" }],
+      clarifyingNote: "Which round is the leadership round?",
+    });
+  });
+
+  it("defaults clarifyingNote to an empty string when omitted", () => {
+    const text = JSON.stringify({ confirmedOperations: [] });
+    expect(parseChatVerifyResponse(text)).toEqual({ operations: [], clarifyingNote: "" });
+  });
+
+  it("drops an invalid operation from confirmedOperations rather than failing the whole response", () => {
+    const text = JSON.stringify({
+      confirmedOperations: [
+        { op: "setConfirmedTotalRounds", count: 4, sourceDetail: "recruiter email" },
+        { op: "updateRoundStatus", roundRef: "Onsite", status: "NOT_A_REAL_STATUS" },
+      ],
+      clarifyingNote: "",
+    });
+
+    expect(parseChatVerifyResponse(text)).toEqual({
+      operations: [{ op: "setConfirmedTotalRounds", count: 4, sourceDetail: "recruiter email" }],
+      clarifyingNote: "",
+    });
+  });
+
+  it("returns null when confirmedOperations is missing or not an array", () => {
+    expect(parseChatVerifyResponse(JSON.stringify({ clarifyingNote: "" }))).toBeNull();
+    expect(parseChatVerifyResponse(JSON.stringify({ confirmedOperations: "not an array" }))).toBeNull();
+  });
+
+  it("returns null for malformed JSON", () => {
+    expect(parseChatVerifyResponse("not json at all")).toBeNull();
   });
 });

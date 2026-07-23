@@ -1,4 +1,5 @@
 import { extractJsonBlocks, VALID_SECTIONS as VALID_THREAD_SECTIONS } from "./researchParsing";
+import { SECTION_TO_BUILDER } from "./researchPrompts";
 
 export const VALID_ROUND_SECTIONS = new Set(["prepMaterial", "smartQuestions", "yourNotes"]);
 
@@ -19,7 +20,8 @@ export type ChatOperation =
       roundRef: string | null;
       sourceDetail: string;
     }
-  | { op: "setConfirmedTotalRounds"; count: number; sourceDetail: string };
+  | { op: "setConfirmedTotalRounds"; count: number; sourceDetail: string }
+  | { op: "researchSection"; section: string; focusNote: string };
 
 export interface ParsedChatResponse {
   reply: string;
@@ -114,6 +116,13 @@ function validateOperation(raw: unknown): ChatOperation | null {
       }
       return null;
     }
+    case "researchSection": {
+      if (isNonEmptyString(record.section) && record.section in SECTION_TO_BUILDER) {
+        const focusNote = typeof record.focusNote === "string" ? record.focusNote.trim() : "";
+        return { op: "researchSection", section: record.section, focusNote };
+      }
+      return null;
+    }
     default:
       return null;
   }
@@ -139,8 +148,7 @@ function tryParseCandidate(jsonBlock: string): ParsedChatResponse | null {
   const operations: ChatOperation[] = [];
   for (const rawOperation of record.operations) {
     const validated = validateOperation(rawOperation);
-    if (validated === null) return null;
-    operations.push(validated);
+    if (validated !== null) operations.push(validated);
   }
 
   return { reply: record.reply, operations };
@@ -150,6 +158,42 @@ export function parseChatResponse(resultText: string): ParsedChatResponse | null
   const candidates = extractJsonBlocks(resultText);
   for (let i = candidates.length - 1; i >= 0; i--) {
     const result = tryParseCandidate(candidates[i]);
+    if (result !== null) return result;
+  }
+  return null;
+}
+
+export interface ChatVerifyResult {
+  operations: ChatOperation[];
+  clarifyingNote: string;
+}
+
+function tryParseVerifyCandidate(jsonBlock: string): ChatVerifyResult | null {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(jsonBlock);
+  } catch {
+    return null;
+  }
+
+  if (typeof parsed !== "object" || parsed === null || !("confirmedOperations" in parsed)) return null;
+  const record = parsed as Record<string, unknown>;
+  if (!Array.isArray(record.confirmedOperations)) return null;
+
+  const operations: ChatOperation[] = [];
+  for (const rawOperation of record.confirmedOperations) {
+    const validated = validateOperation(rawOperation);
+    if (validated !== null) operations.push(validated);
+  }
+
+  const clarifyingNote = typeof record.clarifyingNote === "string" ? record.clarifyingNote.trim() : "";
+  return { operations, clarifyingNote };
+}
+
+export function parseChatVerifyResponse(resultText: string): ChatVerifyResult | null {
+  const candidates = extractJsonBlocks(resultText);
+  for (let i = candidates.length - 1; i >= 0; i--) {
+    const result = tryParseVerifyCandidate(candidates[i]);
     if (result !== null) return result;
   }
   return null;
