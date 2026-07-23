@@ -126,6 +126,48 @@ describe("buildChatPrompt", () => {
     expect(prompt).toContain("Examples:");
     expect(prompt).toContain("recruiter said the range is 150-170k");
   });
+
+  it("lists researchSection as a valid operation shape covering the 9 researchable sections, and explains it triggers a background pass", () => {
+    const prompt = buildChatPrompt({ report: fixtureReport(), history: [], newMessage: "hello" });
+
+    expect(prompt).toContain('"researchSection"');
+    expect(prompt).toContain("focusNote");
+    for (const section of [
+      "companySnapshot",
+      "fundingNews",
+      "cultureValues",
+      "redFlags",
+      "roleSpecifics",
+      "techStack",
+      "companyAtLocation",
+      "compensation",
+      "interviewProcess",
+    ]) {
+      expect(prompt).toContain(section);
+    }
+    expect(prompt.toLowerCase()).toContain("background research pass");
+  });
+
+  it("includes a worked example for researchSection with a specific focus note", () => {
+    const prompt = buildChatPrompt({ report: fixtureReport(), history: [], newMessage: "hello" });
+    expect(prompt).toContain("look harder at the DevRel-specific compensation");
+    expect(prompt).toContain('"researchSection"');
+  });
+
+  it("instructs not proposing researchSection again for a section already listed as in-progress", () => {
+    const prompt = buildChatPrompt({ report: fixtureReport(), history: [], newMessage: "hello" });
+    expect(prompt.toLowerCase()).toContain("researchingsections");
+    expect(prompt.toLowerCase()).toContain("already being looked into");
+  });
+
+  it("serializes currently in-flight section research jobs into the current state", () => {
+    const prompt = buildChatPrompt({
+      report: fixtureReport({ researchingSections: ["compensation"] }),
+      history: [],
+      newMessage: "hello",
+    });
+    expect(prompt).toContain('"researchingSections":["compensation"]');
+  });
 });
 
 describe("buildChatVerifyPrompt", () => {
