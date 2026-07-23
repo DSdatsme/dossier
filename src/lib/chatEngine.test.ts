@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { ClaudeCodeCliChatEngine } from "./chatEngine";
+import { ClaudeCodeCliChatEngine, enrichInterviewer, researchSectionInBackground } from "./chatEngine";
 import { createThread, deleteThread } from "./threads";
 import { prisma } from "./db";
 
@@ -9,6 +9,10 @@ function fakeEnvelope(resultText: string): string {
 
 function chatReply(reply: string, operations: unknown[] = []): string {
   return fakeEnvelope(JSON.stringify({ reply, operations }));
+}
+
+function researchEnvelope(facts: unknown[]): string {
+  return fakeEnvelope(JSON.stringify({ facts }));
 }
 
 /** Seeds a thread with one "you" message (DONE) and one placeholder assistant
@@ -55,11 +59,15 @@ describe("ClaudeCodeCliChatEngine", () => {
   it("creates a round and links a newly created interviewer to it in the same turn", async () => {
     const threadId = await createThread({ companyName: "Onsite Co", position: "Engineer", location: "Remote" });
     const assistantMessageId = await seedTurn(threadId, "Next round is an onsite, interviewer is Jane Doe, senior engineer.");
-    const engine = new ClaudeCodeCliChatEngine(async () =>
-      chatReply("Got it — logged the Onsite round and added Jane Doe.", [
-        { op: "createRound", name: "Onsite", status: "UPCOMING", sourceDetail: "you" },
-        { op: "addInterviewer", name: "Jane Doe", role: "Senior Engineer", roundRef: "Onsite", sourceDetail: "you" },
-      ])
+    // Second arg is the deep-research runner used for the async interviewer-enrichment
+    // sub-task this turn now triggers — a harmless no-op fake, so no real CLI spawns.
+    const engine = new ClaudeCodeCliChatEngine(
+      async () =>
+        chatReply("Got it — logged the Onsite round and added Jane Doe.", [
+          { op: "createRound", name: "Onsite", status: "UPCOMING", sourceDetail: "you" },
+          { op: "addInterviewer", name: "Jane Doe", role: "Senior Engineer", roundRef: "Onsite", sourceDetail: "you" },
+        ]),
+      async () => fakeEnvelope("{}")
     );
 
     await engine.respond(threadId, assistantMessageId);
@@ -265,5 +273,344 @@ describe("ClaudeCodeCliChatEngine", () => {
 
     await expect(engine.respond(threadId, assistantMessageId)).resolves.toBeUndefined();
     expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining("thread likely gone"));
+  });
+
+  it("drops an operation the verify pass does not confirm, and appends its clarifying note to the reply", async () => {
+    const threadId = await createThread({ companyName: "Verify Co", position: "Engineer", location: "Remote" });
+    const assistantMessageId = await seedTurn(threadId, "Round 7 is with Jon.");
+    const engine = new ClaudeCodeCliChatEngine(async (prompt) => {
+      if (prompt.includes("double-checking a set of proposed updates")) {
+        return fakeEnvelope(JSON.stringify({ confirmedOperations: [], clarifyingNote: "Which round is this for?" }));
+      }
+      return chatReply("Logged it.", [{ op: "addInterviewer", name: "Jon", roundRef: "Hiring Manager Interview", sourceDetail: "you" }]);
+    });
+
+    await engine.respond(threadId, assistantMessageId);
+
+    const interviewers = await prisma.interviewerProfile.findMany({ where: { threadId } });
+    expect(interviewers).toHaveLength(0);
+
+    const message = await prisma.message.findUniqueOrThrow({ where: { id: assistantMessageId } });
+    expect(message.status).toBe("DONE");
+    expect(message.text).toBe("Logged it. Which round is this for?");
+
+    await deleteThread(threadId);
+  });
+
+  it("verify pass can confirm some operations from a turn and drop others", async () => {
+    const threadId = await createThread({ companyName: "Partial Verify Co", position: "Engineer", location: "Remote" });
+    const assistantMessageId = await seedTurn(threadId, "Comp is 180k, and round 7 is with Jon.");
+    const engine = new ClaudeCodeCliChatEngine(async (prompt) => {
+      if (prompt.includes("double-checking a set of proposed updates")) {
+        return fakeEnvelope(
+          JSON.stringify({
+            confirmedOperations: [{ op: "addFact", scope: "thread", section: "compensation", content: "Role: ~180k", sourceDetail: "you" }],
+            clarifyingNote: "Which round is Jon interviewing for?",
+          })
+        );
+      }
+      return chatReply("Noted.", [
+        { op: "addFact", scope: "thread", section: "compensation", content: "Role: ~180k", sourceDetail: "you" },
+        { op: "addInterviewer", name: "Jon", roundRef: "7", sourceDetail: "you" },
+      ]);
+    });
+
+    await engine.respond(threadId, assistantMessageId);
+
+    const facts = await prisma.fact.findMany({ where: { threadId } });
+    expect(facts).toHaveLength(1);
+    expect(facts[0].content).toBe("Role: ~180k");
+
+    const interviewers = await prisma.interviewerProfile.findMany({ where: { threadId } });
+    expect(interviewers).toHaveLength(0);
+
+    const message = await prisma.message.findUniqueOrThrow({ where: { id: assistantMessageId } });
+    expect(message.text).toBe("Noted. Which round is Jon interviewing for?");
+
+    await deleteThread(threadId);
+  });
+
+  it("falls back to applying unverified operations when the verify pass itself fails", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const threadId = await createThread({ companyName: "Verify Crash Co", position: "Engineer", location: "Remote" });
+    const assistantMessageId = await seedTurn(threadId, "Recruiter quoted $180k-$210k.");
+    const engine = new ClaudeCodeCliChatEngine(async (prompt) => {
+      if (prompt.includes("double-checking a set of proposed updates")) {
+        throw new Error("verify boom");
+      }
+      return chatReply("Noted the comp range.", [
+        { op: "addFact", scope: "thread", section: "compensation", content: "Role: ~$180k-$210k", sourceDetail: "you" },
+      ]);
+    });
+
+    await engine.respond(threadId, assistantMessageId);
+
+    const facts = await prisma.fact.findMany({ where: { threadId } });
+    expect(facts).toHaveLength(1);
+    const message = await prisma.message.findUniqueOrThrow({ where: { id: assistantMessageId } });
+    expect(message.status).toBe("DONE");
+    expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining("verify pass failed"));
+
+    await deleteThread(threadId);
+  });
+
+  it("proposing researchSection creates a job row and does not error the turn", async () => {
+    const threadId = await createThread({ companyName: "Trigger Co", position: "Engineer", location: "Remote" });
+    const assistantMessageId = await seedTurn(threadId, "Can you look harder at DevRel comp?");
+    // The deepRunner never resolves, so the fire-and-forget researchSectionInBackground
+    // call (kicked off but not awaited by respond()) never reaches its finally-block
+    // cleanup during this test — otherwise it can race ahead of our own assertions and
+    // delete the job row before we get to check it existed.
+    const engine = new ClaudeCodeCliChatEngine(
+      async () =>
+        chatReply("On it — digging into DevRel-specific compensation now.", [
+          { op: "researchSection", section: "compensation", focusNote: "Focus on DevRel comp specifically." },
+        ]),
+      () => new Promise(() => {}),
+      async () => fakeEnvelope("{}")
+    );
+
+    await engine.respond(threadId, assistantMessageId);
+
+    const jobs = await prisma.sectionResearchJob.findMany({ where: { threadId } });
+    expect(jobs).toHaveLength(1);
+    expect(jobs[0].section).toBe("compensation");
+
+    const message = await prisma.message.findUniqueOrThrow({ where: { id: assistantMessageId } });
+    expect(message.status).toBe("DONE");
+
+    await deleteThread(threadId);
+  });
+
+  it("does not create a duplicate job when a section is already being researched", async () => {
+    const threadId = await createThread({ companyName: "Duplicate Co", position: "Engineer", location: "Remote" });
+    await prisma.sectionResearchJob.create({ data: { threadId, section: "compensation" } });
+    const assistantMessageId = await seedTurn(threadId, "Can you look harder at DevRel comp again?");
+    const engine = new ClaudeCodeCliChatEngine(
+      async () => chatReply("Already digging into that.", [{ op: "researchSection", section: "compensation", focusNote: "" }]),
+      async () => fakeEnvelope("{}"),
+      async () => fakeEnvelope("{}")
+    );
+
+    await engine.respond(threadId, assistantMessageId);
+
+    const jobs = await prisma.sectionResearchJob.findMany({ where: { threadId } });
+    expect(jobs).toHaveLength(1);
+
+    await deleteThread(threadId);
+  });
+
+  it("does not start section research while the initial research pipeline is still running", async () => {
+    const threadId = await createThread({ companyName: "Still Researching Co", position: "Engineer", location: "Remote" });
+    await prisma.thread.update({ where: { id: threadId }, data: { researchStatus: "RESEARCHING" } });
+    const assistantMessageId = await seedTurn(threadId, "Can you look harder at DevRel comp?");
+    const engine = new ClaudeCodeCliChatEngine(
+      async () => chatReply("On it.", [{ op: "researchSection", section: "compensation", focusNote: "" }]),
+      async () => fakeEnvelope("{}"),
+      async () => fakeEnvelope("{}")
+    );
+
+    await engine.respond(threadId, assistantMessageId);
+
+    const jobs = await prisma.sectionResearchJob.findMany({ where: { threadId } });
+    expect(jobs).toHaveLength(0);
+
+    await deleteThread(threadId);
+  });
+});
+
+describe("enrichInterviewer", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("fills in role/tenure/background from deep research when they are not already known", async () => {
+    const threadId = await createThread({ companyName: "Deep Co", position: "Engineer", location: "Remote" });
+    const profile = await prisma.interviewerProfile.create({ data: { threadId, name: "Jane Doe", sourceDetail: "you" } });
+
+    await enrichInterviewer(
+      async () => fakeEnvelope(JSON.stringify({ role: "Staff Engineer", tenure: "5 yrs", background: "Ex-Google" })),
+      threadId,
+      profile.id,
+      "Jane Doe",
+      "Deep Co"
+    );
+
+    const updated = await prisma.interviewerProfile.findUniqueOrThrow({ where: { id: profile.id } });
+    expect(updated.role).toBe("Staff Engineer");
+    expect(updated.tenure).toBe("5 yrs");
+    expect(updated.background).toBe("Ex-Google");
+
+    await deleteThread(threadId);
+  });
+
+  it("does not overwrite fields the user already provided", async () => {
+    const threadId = await createThread({ companyName: "Deep Co", position: "Engineer", location: "Remote" });
+    const profile = await prisma.interviewerProfile.create({
+      data: { threadId, name: "Jane Doe", role: "Senior Engineer (per you)", sourceDetail: "you" },
+    });
+
+    await enrichInterviewer(
+      async () => fakeEnvelope(JSON.stringify({ role: "Staff Engineer", tenure: "5 yrs", background: "Ex-Google" })),
+      threadId,
+      profile.id,
+      "Jane Doe",
+      "Deep Co"
+    );
+
+    const updated = await prisma.interviewerProfile.findUniqueOrThrow({ where: { id: profile.id } });
+    expect(updated.role).toBe("Senior Engineer (per you)");
+    expect(updated.tenure).toBe("5 yrs");
+
+    await deleteThread(threadId);
+  });
+
+  it("does nothing when the interviewer profile no longer exists", async () => {
+    await expect(
+      enrichInterviewer(async () => fakeEnvelope("{}"), "gone-thread", "gone-profile", "Jane Doe", "Deep Co")
+    ).resolves.toBeUndefined();
+  });
+
+  it("does nothing when the runner rejects", async () => {
+    const threadId = await createThread({ companyName: "Deep Co", position: "Engineer", location: "Remote" });
+    const profile = await prisma.interviewerProfile.create({ data: { threadId, name: "Jane Doe", sourceDetail: "you" } });
+
+    await expect(
+      enrichInterviewer(
+        async () => {
+          throw new Error("boom");
+        },
+        threadId,
+        profile.id,
+        "Jane Doe",
+        "Deep Co"
+      )
+    ).rejects.toThrow("boom");
+
+    await deleteThread(threadId);
+  });
+});
+
+describe("researchSectionInBackground", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("writes new facts and cleans up the job row on success", async () => {
+    const threadId = await createThread({ companyName: "Section Co", position: "Engineer", location: "Remote" });
+    await prisma.sectionResearchJob.create({ data: { threadId, section: "compensation" } });
+
+    await researchSectionInBackground(
+      async () => researchEnvelope([{ section: "compensation", content: "DevRel: ~$163k-$237k", sourceDetail: "google careers" }]),
+      async () => researchEnvelope([{ section: "compensation", content: "DevRel: ~$163k-$237k", sourceDetail: "google careers" }]),
+      threadId,
+      "compensation",
+      "Focus on DevRel comp specifically.",
+      { companyName: "Section Co", companyDomain: null, position: "Engineer", location: "Remote" }
+    );
+
+    const facts = await prisma.fact.findMany({ where: { threadId, section: "compensation" } });
+    expect(facts).toHaveLength(1);
+    expect(facts[0]).toMatchObject({ content: "DevRel: ~$163k-$237k", sourceType: "RESEARCHED" });
+
+    const jobs = await prisma.sectionResearchJob.findMany({ where: { threadId } });
+    expect(jobs).toHaveLength(0);
+
+    await deleteThread(threadId);
+  });
+
+  it("only writes the facts the dedup pass keeps, leaving existing facts untouched", async () => {
+    const threadId = await createThread({ companyName: "Dedup Co", position: "Engineer", location: "Remote" });
+    await prisma.fact.create({
+      data: { threadId, section: "compensation", content: "Role: ~$150k-$170k", sourceType: "RESEARCHED", sourceDetail: "glassdoor.com" },
+    });
+    await prisma.sectionResearchJob.create({ data: { threadId, section: "compensation" } });
+
+    await researchSectionInBackground(
+      async () =>
+        researchEnvelope([
+          { section: "compensation", content: "Role: ~$150k-$170k (Glassdoor)", sourceDetail: "glassdoor.com" },
+          { section: "compensation", content: "DevRel: ~$163k-$237k", sourceDetail: "google careers" },
+        ]),
+      async () => researchEnvelope([{ section: "compensation", content: "DevRel: ~$163k-$237k", sourceDetail: "google careers" }]),
+      threadId,
+      "compensation",
+      "",
+      { companyName: "Dedup Co", companyDomain: null, position: "Engineer", location: "Remote" }
+    );
+
+    const facts = await prisma.fact.findMany({ where: { threadId, section: "compensation" } });
+    expect(facts.map((f) => f.content).sort()).toEqual(["DevRel: ~$163k-$237k", "Role: ~$150k-$170k"].sort());
+
+    await deleteThread(threadId);
+  });
+
+  it("falls back to keeping all new facts when the dedup pass itself fails", async () => {
+    const threadId = await createThread({ companyName: "Dedup Crash Co", position: "Engineer", location: "Remote" });
+    await prisma.sectionResearchJob.create({ data: { threadId, section: "techStack" } });
+
+    await researchSectionInBackground(
+      async () => researchEnvelope([{ section: "techStack", content: "Rust", sourceDetail: "eng blog" }]),
+      async () => {
+        throw new Error("dedup boom");
+      },
+      threadId,
+      "techStack",
+      "",
+      { companyName: "Dedup Crash Co", companyDomain: null, position: "Engineer", location: "Remote" }
+    );
+
+    const facts = await prisma.fact.findMany({ where: { threadId, section: "techStack" } });
+    expect(facts).toHaveLength(1);
+    expect(facts[0].content).toBe("Rust");
+
+    const jobs = await prisma.sectionResearchJob.findMany({ where: { threadId } });
+    expect(jobs).toHaveLength(0);
+
+    await deleteThread(threadId);
+  });
+
+  it("cleans up the job row and writes nothing when the research call finds no facts", async () => {
+    const threadId = await createThread({ companyName: "Empty Co", position: "Engineer", location: "Remote" });
+    await prisma.sectionResearchJob.create({ data: { threadId, section: "interviewProcess" } });
+
+    await researchSectionInBackground(
+      async () => researchEnvelope([]),
+      async () => researchEnvelope([]),
+      threadId,
+      "interviewProcess",
+      "",
+      { companyName: "Empty Co", companyDomain: null, position: "Engineer", location: "Remote" }
+    );
+
+    const facts = await prisma.fact.findMany({ where: { threadId } });
+    expect(facts).toHaveLength(0);
+    const jobs = await prisma.sectionResearchJob.findMany({ where: { threadId } });
+    expect(jobs).toHaveLength(0);
+
+    await deleteThread(threadId);
+  });
+
+  it("cleans up the job row even when the research call rejects", async () => {
+    const threadId = await createThread({ companyName: "Research Crash Co", position: "Engineer", location: "Remote" });
+    await prisma.sectionResearchJob.create({ data: { threadId, section: "compensation" } });
+
+    await expect(
+      researchSectionInBackground(
+        async () => {
+          throw new Error("research boom");
+        },
+        async () => researchEnvelope([]),
+        threadId,
+        "compensation",
+        "",
+        { companyName: "Research Crash Co", companyDomain: null, position: "Engineer", location: "Remote" }
+      )
+    ).rejects.toThrow("research boom");
+
+    const jobs = await prisma.sectionResearchJob.findMany({ where: { threadId } });
+    expect(jobs).toHaveLength(0);
+
+    await deleteThread(threadId);
   });
 });

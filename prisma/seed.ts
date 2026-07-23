@@ -7,6 +7,7 @@ const prisma = new PrismaClient({ adapter });
 async function main() {
   await prisma.message.deleteMany();
   await prisma.fact.deleteMany();
+  await prisma.sectionResearchJob.deleteMany();
   await prisma.roundInterviewer.deleteMany();
   await prisma.interviewerProfile.deleteMany();
   await prisma.round.deleteMany();
