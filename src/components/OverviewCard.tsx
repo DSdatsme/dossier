@@ -43,6 +43,24 @@ function LinkIcon() {
   );
 }
 
+function ResearchingBadge({ label = "Researching…" }: { label?: string }) {
+  return (
+    <span className={styles.researchingBadge}>
+      <span className={styles.researchingDot} aria-hidden="true" />
+      {label}
+    </span>
+  );
+}
+
+function SectionLabel({ title, active }: { title: string; active: boolean }) {
+  return (
+    <h3 className={styles.label}>
+      {title}
+      {active && <ResearchingBadge />}
+    </h3>
+  );
+}
+
 function StatCell({ icon, value, label }: { icon: ReactNode; value: string; label: string }) {
   return (
     <div className={styles.stat}>
@@ -267,45 +285,53 @@ function ChipRow({ facts }: { facts: FactView[] }) {
 export function OverviewCard({
   sections,
   companyDomain,
+  researchingSections = [],
 }: {
   sections: Record<string, FactView[]>;
   companyDomain: string | null;
+  researchingSections?: string[];
 }) {
   const companySnapshot = sections.companySnapshot ?? [];
   const cultureValues = sections.cultureValues ?? [];
   const companyAtLocation = sections.companyAtLocation ?? [];
   const roleSpecifics = sections.roleSpecifics ?? [];
   const tagline = companySnapshot.find((fact) => !parseLabelValue(fact.content));
+  const isResearching = (section: string) => researchingSections.includes(section);
 
   const highlightParts = [companyDomain, tagline?.content].filter(Boolean);
 
   return (
     <Accordion title="Overview" highlight={highlightParts.join(" · ")} defaultOpen>
       {tagline ? <p className={styles.tagline}>{tagline.content}</p> : null}
+      {isResearching("companySnapshot") && (
+        <div className={styles.snapshotBadgeRow}>
+          <ResearchingBadge label="Researching company snapshot…" />
+        </div>
+      )}
 
       <StatStrip companySnapshot={companySnapshot} cultureValues={cultureValues} />
 
       <div className={styles.ovGrid}>
         <div className={styles.ovBlock}>
-          <h3 className={styles.label}>Culture &amp; Values</h3>
+          <SectionLabel title="Culture & Values" active={isResearching("cultureValues")} />
           <CultureValuesBlock facts={cultureValues} />
         </div>
         <div className={styles.ovBlock}>
-          <h3 className={styles.label}>Company @ Location</h3>
+          <SectionLabel title="Company @ Location" active={isResearching("companyAtLocation")} />
           <KeyValueList facts={companyAtLocation} slots={["Office opened", "Local team", "Reports to"]} />
         </div>
         <div className={styles.ovBlock}>
-          <h3 className={styles.label}>Role Specifics</h3>
+          <SectionLabel title="Role Specifics" active={isResearching("roleSpecifics")} />
           <KeyValueList facts={roleSpecifics} slots={["Team size", "Schedule", "Focus"]} />
         </div>
         <div className={styles.ovBlock}>
-          <h3 className={styles.label}>Funding &amp; Notable News</h3>
+          <SectionLabel title="Funding & Notable News" active={isResearching("fundingNews")} />
           <Timeline facts={sections.fundingNews ?? []} />
         </div>
       </div>
 
       <section className={styles.sectionFull}>
-        <h3 className={styles.label}>Tech Stack</h3>
+        <SectionLabel title="Tech Stack" active={isResearching("techStack")} />
         <div className={styles.legend}>
           <span className={styles.legendItem}>
             <span className={`${styles.legendDot} ${styles.legendDotResearch}`} aria-hidden="true" />
@@ -320,17 +346,17 @@ export function OverviewCard({
       </section>
 
       <section className={styles.sectionFull}>
-        <h3 className={styles.label}>Compensation</h3>
+        <SectionLabel title="Compensation" active={isResearching("compensation")} />
         <CompensationList facts={sections.compensation ?? []} />
       </section>
 
       <section className={styles.sectionFull}>
-        <h3 className={styles.label}>Interview Process</h3>
+        <SectionLabel title="Interview Process" active={isResearching("interviewProcess")} />
         <FactList facts={sections.interviewProcess ?? []} />
       </section>
 
       <section className={styles.sectionFull}>
-        <h3 className={styles.label}>Red Flags / Things to Know</h3>
+        <SectionLabel title="Red Flags / Things to Know" active={isResearching("redFlags")} />
         <FactList facts={sections.redFlags ?? []} />
       </section>
 

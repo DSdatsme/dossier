@@ -99,4 +99,37 @@ describe("OverviewCard", () => {
     expect(screen.getByText("Interview Process")).toBeInTheDocument();
     expect(screen.getByText("Commonly 4 rounds over 3 weeks.")).toBeInTheDocument();
   });
+
+  it("shows no researching badges when no sections are in progress", () => {
+    render(<OverviewCard companyDomain={null} sections={{}} />);
+    expect(screen.queryByText("Researching…")).not.toBeInTheDocument();
+  });
+
+  it("shows a researching badge next to a section currently being re-researched, and not next to others", () => {
+    render(
+      <OverviewCard
+        companyDomain={null}
+        sections={{ compensation: [researched("Base: ~$150k")], techStack: [researched("Go")] }}
+        researchingSections={["compensation"]}
+      />
+    );
+
+    const compensationHeading = screen.getByText("Compensation");
+    expect(compensationHeading.closest("h3")).toHaveTextContent("Researching…");
+
+    const techStackHeading = screen.getByText("Tech Stack");
+    expect(techStackHeading.closest("h3")).not.toHaveTextContent("Researching…");
+  });
+
+  it("shows a distinct researching badge for companySnapshot, which has no section heading of its own", () => {
+    render(
+      <OverviewCard
+        companyDomain={null}
+        sections={{ companySnapshot: [researched("Founded: 2016")] }}
+        researchingSections={["companySnapshot"]}
+      />
+    );
+
+    expect(screen.getByText("Researching company snapshot…")).toBeInTheDocument();
+  });
 });
