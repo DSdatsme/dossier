@@ -5,10 +5,44 @@
   text-transform: uppercase;
   color: var(--ink-faint);
   margin-bottom: 0.6rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 .empty { font-size: 0.83rem; color: var(--ink-faint); font-style: italic; }
 
 .tagline { font-size: 0.9rem; color: var(--ink-muted); margin-bottom: 1rem; }
+
+.snapshotBadgeRow { margin-bottom: 0.8rem; }
+
+.researchingBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--accent-ink);
+  background: var(--accent-soft);
+  border-radius: 999px;
+  padding: 0.18rem 0.55rem;
+}
+.researchingDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex: none;
+  animation: researchingPulse 1.4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .researchingDot { animation: none; }
+}
+@keyframes researchingPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.75); }
+}
 
 /* stat strip */
 .statStrip {
