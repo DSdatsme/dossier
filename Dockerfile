@@ -42,7 +42,11 @@ RUN npm prune --omit=dev
 FROM node:26-slim
 
 # Same libssl requirement as the builder stage, for the same Prisma reason.
-RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
+# Also update the global npm: the base image bundles an npm whose transitive
+# deps (tar, brace-expansion) carry known CVEs. This brings them to patched
+# versions so the Trivy image scan passes.
+RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/* \
+    && npm install -g npm@latest
 
 WORKDIR /app
 

@@ -7,4 +7,7 @@ node_modules/
 /prisma/dev.db
 /prisma/test.db
 /prisma/local.db
+/integration-test.db
+/dev.db
+/local.db
 *.tsbuildinfo

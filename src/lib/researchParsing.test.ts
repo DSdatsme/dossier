@@ -48,6 +48,30 @@ describe("parseResearchFacts", () => {
     expect(parseResearchFacts(text)).toEqual([{ section: "techStack", content: "Go", sourceDetail: "x" }]);
   });
 
+  it("includes sourceUrl when present, and omits it when absent", () => {
+    const text = JSON.stringify({
+      facts: [
+        { section: "techStack", content: "Go", sourceDetail: "stackshare.io", sourceUrl: "https://stackshare.io/acme" },
+        { section: "techStack", content: "Kubernetes", sourceDetail: "stackshare.io" },
+      ],
+    });
+
+    expect(parseResearchFacts(text)).toEqual([
+      { section: "techStack", content: "Go", sourceDetail: "stackshare.io", sourceUrl: "https://stackshare.io/acme" },
+      { section: "techStack", content: "Kubernetes", sourceDetail: "stackshare.io" },
+    ]);
+  });
+
+  it("accepts the interviewProcess section", () => {
+    const text = JSON.stringify({
+      facts: [{ section: "interviewProcess", content: "Commonly 4 rounds over 3 weeks.", sourceDetail: "glassdoor.com" }],
+    });
+
+    expect(parseResearchFacts(text)).toEqual([
+      { section: "interviewProcess", content: "Commonly 4 rounds over 3 weeks.", sourceDetail: "glassdoor.com" },
+    ]);
+  });
+
   it("returns an empty array for malformed JSON", () => {
     expect(parseResearchFacts("this is not json at all")).toEqual([]);
   });
