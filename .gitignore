@@ -10,4 +10,5 @@ node_modules/
 /integration-test.db
 /dev.db
 /local.db
+/test.db
 *.tsbuildinfo
